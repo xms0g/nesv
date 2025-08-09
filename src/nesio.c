@@ -15,7 +15,9 @@ void __fastcall__ printREG(const unsigned char reg, const u32* val, unsigned cha
     vram_adr(NTADR_A(*x, ++*y));
     
     if (reg == 'i') {
-        vram_put('i');  
+        vram_put('i');
+        vram_put('m');
+        vram_put('m');  
     } else {
         vram_put('x');
         vram_put(reg + '0');
