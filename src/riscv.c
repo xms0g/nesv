@@ -1,5 +1,7 @@
 #include "riscv.h"
 #include "neslib.h"
+#include "nesio.h"
+#include "types.h"
 
 #define X0  R_ZERO
 #define X1  R_RA
@@ -70,10 +72,6 @@ enum Registers {
     R_T6 = 31
 };
 
-typedef union {
-    unsigned char b[4];
-} u32;
-
 struct RiscVInstr {
     unsigned char opcode;
     unsigned char rd;
@@ -99,9 +97,6 @@ static void __fastcall__ vExecute(void);
 
 static void __fastcall__ addU32toU32(u32 *dst, const u32 *src);
 static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]);
-
-static void __fastcall__ printOP(const unsigned char* op, unsigned char* x, unsigned char* y);
-static void __fastcall__ printREG(const unsigned char reg, unsigned char* x, unsigned char* y);
 
 void __fastcall__ vInit(void) {
     
@@ -158,8 +153,7 @@ static void __fastcall__ vDecode(const unsigned char raw[4]) {
                     break;
             }
             break;
-        }
-    
+    }
 }
 
 static void __fastcall__ vExecute(void) {
@@ -205,9 +199,9 @@ static void __fastcall__ vExecute(void) {
                     break;
             }
 
-            printREG(rm.instr.rd, &x, &y);
-            printREG(rm.instr.rs1, &x, &y);
-            printREG(rm.instr.rs2, &x, &y);
+            printREG(rm.instr.rd, &rm.regs[rm.instr.rd], &x, &y);
+            printREG(rm.instr.rs1, &rm.regs[rm.instr.rs1], &x, &y);
+            printREG(rm.instr.rs2, &rm.regs[rm.instr.rs2], &x, &y);
           
             vram_adr(NTADR_A(x, ++y));
             vram_put(' ');
@@ -248,9 +242,9 @@ static void __fastcall__ vExecute(void) {
                     break;
             }
             
-            printREG(rm.instr.rd, &x, &y);
-            printREG(rm.instr.rs1, &x, &y);
-            printREG('i', &x, &y);
+            printREG(rm.instr.rd, &rm.regs[rm.instr.rd], &x, &y);
+            printREG(rm.instr.rs1, &rm.regs[rm.instr.rs1], &x, &y);
+            printREG('i', &rm.instr.imm, &x, &y);
 
             vram_adr(NTADR_A(x, ++y));
             vram_put(' ');
@@ -287,28 +281,4 @@ static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2
     }
 
     addU32toU32(dst, &imm4);
-}
-
-static void __fastcall__ printOP(const unsigned char* op, unsigned char* x, unsigned char* y) {
-    unsigned char i = 0;
-    
-    vram_adr(NTADR_A(*x, ++*y));
-    while (op[i]) {
-        vram_put(op[i]);
-        ++i;
-    }
-}
-
-static void __fastcall__ printREG(const unsigned char reg, unsigned char* x, unsigned char* y) {
-    vram_adr(NTADR_A(*x, ++*y));
-    if (reg == 'i') {
-        vram_put('i');
-        vram_put(':');
-        vram_put(rm.instr.imm.b[0] + '0');
-    } else {
-        vram_put('x');
-        vram_put(reg + '0');
-        vram_put(':');
-        vram_put(rm.regs[reg].b[0] + '0');
-    }
 }

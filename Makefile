@@ -1,6 +1,6 @@
 TARGET=nesv.nes
 CFG=config/nrom_128_horz.cfg
-OBJS=build/riscv.o build/crt0.o build/main.o
+OBJS=build/riscv.o build/crt0.o build/main.o build/nesio.o
 CC=cc65
 CA65=ca65
 LD=ld65
