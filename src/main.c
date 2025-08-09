@@ -28,8 +28,10 @@ void main(void) {
 
 	memcpy(&cpu.bus.dram.mem, code, sizeof(code));
 	
-	while (cpu.pc < sizeof(code)) { 
+	while (1) { 
         instr = rvFetch(&cpu);
+
+		if (instr->b[0] == 0) break;
 
         rvDecode(&cpu, instr);
 
