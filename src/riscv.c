@@ -1,7 +1,6 @@
 #include "riscv.h"
 #include "neslib.h"
 #include "nesio.h"
-#include "types.h"
 
 #define X0  R_ZERO
 #define X1  R_RA
@@ -72,72 +71,36 @@ enum Registers {
     R_T6 = 31
 };
 
-struct RiscVInstr {
-    unsigned char opcode;
-    unsigned char rd;
-    unsigned char funct3;
-    unsigned char rs1;
-    unsigned char rs2;
-    unsigned char funct7;
-    u32 imm;
-};
-
-struct RiscV {
-    u32 regs[32];
-    struct RiscVInstr instr;
-    unsigned char pc;
-};
-
-
-static struct RiscV rm;
-
-static int __fastcall__ vFetch(void);
-static void __fastcall__ vDecode(const unsigned char raw[4]);
-static void __fastcall__ vExecute(void);
-
 static void __fastcall__ addU32toU32(u32 *dst, const u32 *src);
 static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]);
 
-void __fastcall__ vInit(void) {
-    
-    rm.regs[X0].b[0] = 0x0;
-    rm.regs[R_SP].b[0] = 0xFF; // Stack pointer initialized to the top of RAM
-    rm.regs[R_SP].b[1] = 0xFF;
+void __fastcall__ rvInit(struct RiscV* cpu) {
+    cpu->regs[X0].b[0] = 0x0;
+    cpu->regs[R_SP].b[0] = 0xFF; // Stack pointer initialized to the top of RAM
+    cpu->regs[R_SP].b[1] = 0x0;
+    cpu->pc = 0;
 }
 
-void __fastcall__ vRun(const unsigned char* raw, unsigned char size) {
-    unsigned int i;
-    for (i = 0; i < size - 1; i += 4) { 
-        //vFetch();
-
-        vDecode(raw + i);
-
-        vExecute();
-        
-    }
-   
-}
-
-static int __fastcall__ vFetch(void) {
+int __fastcall__ vFetch(void) {
     // Fetch logic here
    
     return 0; // Placeholder return value
 }
 
-static void __fastcall__ vDecode(const unsigned char raw[4]) {
-    rm.instr.opcode = raw[0] & 0x7F;
-    rm.instr.rd = ((raw[0] >> 7) & 0x01) | ((raw[1] & 0x0F) << 1);
-    rm.instr.funct3 = (raw[1] >> 4) & 0x07;
-    rm.instr.rs1 = ((raw[1] >> 7) & 1) | ((raw[2] & 0x0F) << 1); 
+void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
+    cpu->instr.opcode = raw->b[0] & 0x7F;
+    cpu->instr.rd = ((raw->b[0] >> 7) & 0x01) | ((raw->b[1] & 0x0F) << 1);
+    cpu->instr.funct3 = (raw->b[1] >> 4) & 0x07;
+    cpu->instr.rs1 = ((raw->b[1] >> 7) & 1) | ((raw->b[2] & 0x0F) << 1); 
    
-    switch (rm.instr.opcode) {
+    switch (cpu->instr.opcode) {
         case 0x33: // R-type instructions
-            rm.instr.rs2 = ((raw[2] >> 4) & 0x0F) | ((raw[3] & 0x01) << 4);
-            rm.instr.funct7 = (raw[3] >> 1) & 0x7F;
+            cpu->instr.rs2 = ((raw->b[2] >> 4) & 0x0F) | ((raw->b[3] & 0x01) << 4);
+            cpu->instr.funct7 = (raw->b[3] >> 1) & 0x7F;
             break;
         case 0x13: // I-type instructions
         case 0x3: // Load instructions
-            switch (rm.instr.funct3) {
+            switch (cpu->instr.funct3) {
                 case 0x0: // addi
                 case 0x4: // xori
                 case 0x6: // ori
@@ -146,8 +109,8 @@ static void __fastcall__ vDecode(const unsigned char raw[4]) {
                 case 0x5: // srli/srai
                 case 0x2: // slti
                 case 0x3: // sltiu
-                    rm.instr.imm.b[0] = raw[2] >> 4; // immediate low byte
-                    rm.instr.imm.b[1] = raw[3];      // immediate high byte    
+                    cpu->instr.imm.b[0] = raw->b[2] >> 4; // immediate low byte
+                    cpu->instr.imm.b[1] = raw->b[3];      // immediate high byte    
                     break;
                 default:
                     break;
@@ -156,19 +119,19 @@ static void __fastcall__ vDecode(const unsigned char raw[4]) {
     }
 }
 
-static void __fastcall__ vExecute(void) {
+void __fastcall__ rvExecute(struct RiscV* cpu) {
     static unsigned char x = 5,y = 0;
     
-    switch (rm.instr.opcode) {
+    switch (cpu->instr.opcode) {
         case 0x33:
-            switch (rm.instr.funct3) {
+            switch (cpu->instr.funct3) {
                 case 0x0: // add/sub
-                    if (rm.instr.funct7 == 0x00) { // add
+                    if (cpu->instr.funct7 == 0x00) { // add
                         printOP("add", &x, &y);
 
-                        addU32toU32(&rm.regs[rm.instr.rd], &rm.regs[rm.instr.rs1]);
-                        addU32toU32(&rm.regs[rm.instr.rd], &rm.regs[rm.instr.rs2]);
-                    } else if (rm.instr.funct7 == 0x20) { // sub
+                        addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs1]);
+                        addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    } else if (cpu->instr.funct7 == 0x20) { // sub
                         printOP("sub", &x, &y);
                     }
                     break;
@@ -185,9 +148,9 @@ static void __fastcall__ vExecute(void) {
                     printOP("sll", &x, &y);
                     break;
                 case 0x5: // srl/sra
-                    if (rm.instr.funct7 == 0x00) { // srl
+                    if (cpu->instr.funct7 == 0x00) { // srl
                         printOP("srl", &x, &y);
-                    } else if (rm.instr.funct7 == 0x20) { // sra
+                    } else if (cpu->instr.funct7 == 0x20) { // sra
                         printOP("sra", &x, &y);
                     }
                     break;
@@ -199,19 +162,19 @@ static void __fastcall__ vExecute(void) {
                     break;
             }
 
-            printREG(rm.instr.rd, &rm.regs[rm.instr.rd], &x, &y);
-            printREG(rm.instr.rs1, &rm.regs[rm.instr.rs1], &x, &y);
-            printREG(rm.instr.rs2, &rm.regs[rm.instr.rs2], &x, &y);
+            printREG(cpu->instr.rd, &cpu->regs[cpu->instr.rd], &x, &y);
+            printREG(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1], &x, &y);
+            printREG(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2], &x, &y);
           
             vram_adr(NTADR_A(x, ++y));
             vram_put(' ');
             break;
         case 0x13:
-            switch (rm.instr.funct3) {
+            switch (cpu->instr.funct3) {
                 case 0x0: // addi
                     printOP("addi", &x, &y);
 
-                    addImm16toU32(&rm.regs[rm.instr.rd], rm.instr.imm.b);
+                    addImm16toU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x4: // xori
                     printOP("xori", &x, &y);
@@ -226,9 +189,9 @@ static void __fastcall__ vExecute(void) {
                     printOP("slli", &x, &y);
                     break;
                 case 0x5: // srli/srai
-                    if (rm.instr.funct7 == 0x00) { // srli
+                    if (cpu->instr.funct7 == 0x00) { // srli
                         printOP("srli", &x, &y);
-                    } else if (rm.instr.funct7 == 0x20) { // srai
+                    } else if (cpu->instr.funct7 == 0x20) { // srai
                         printOP("srai", &x, &y);
                     }
                     break;
@@ -242,9 +205,9 @@ static void __fastcall__ vExecute(void) {
                     break;
             }
             
-            printREG(rm.instr.rd, &rm.regs[rm.instr.rd], &x, &y);
-            printREG(rm.instr.rs1, &rm.regs[rm.instr.rs1], &x, &y);
-            printREG('i', &rm.instr.imm, &x, &y);
+            printREG(cpu->instr.rd, &cpu->regs[cpu->instr.rd], &x, &y);
+            printREG(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1], &x, &y);
+            printREG('i', &cpu->instr.imm, &x, &y);
 
             vram_adr(NTADR_A(x, ++y));
             vram_put(' ');

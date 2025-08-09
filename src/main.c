@@ -18,12 +18,30 @@ static const unsigned char code[] = {
     0xb3, 0x02, 0x73, 0x00
 };
 
+static struct RiscV cpu;
+static u32 instr;
+
 void main(void) {
 	ppu_off(); // screen off
 
 	pal_bg(palette); //	load the BG palette
+
+	rvInit(&cpu);
 	
-	vRun(code, 12); // run the RISC-V code
+	while (cpu.pc < sizeof(code)) { 
+        //vFetch();
+		unsigned char* p = (unsigned char*)(code + cpu.pc);
+		instr.b[0] = p[0];
+		instr.b[1] = p[1];
+		instr.b[2] = p[2];
+		instr.b[3] = p[3];
+        rvDecode(&cpu, &instr);
+
+        rvExecute(&cpu);
+
+		cpu.pc += 4;
+        
+    }
 	
 	// vram_adr and vram_put only work with screen off
 	// NOTE, you could replace everything between i = 0; and here with...
