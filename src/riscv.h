@@ -2,6 +2,7 @@
 #define RISCV_H
 
 #include "types.h"
+#include "bus.h"
 
 struct RiscVInstr {
     unsigned char opcode;
@@ -17,12 +18,15 @@ struct RiscV {
     u32 regs[32];
     struct RiscVInstr instr;
     unsigned char pc;
+    struct Bus bus;
 };
 
 void __fastcall__ rvInit(struct RiscV* cpu);
 
-int __fastcall__ vFetch(void);
+u32* __fastcall__ rvFetch(struct RiscV* cpu);
+
 void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw);
+
 void __fastcall__ rvExecute(struct RiscV* cpu);
 
 #endif

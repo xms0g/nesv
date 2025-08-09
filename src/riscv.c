@@ -76,15 +76,13 @@ static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
-    cpu->regs[R_SP].b[0] = 0xFF; // Stack pointer initialized to the top of RAM
+    cpu->regs[R_SP].b[0] = DRAM_SIZE;
     cpu->regs[R_SP].b[1] = 0x0;
     cpu->pc = 0;
 }
 
-int __fastcall__ vFetch(void) {
-    // Fetch logic here
-   
-    return 0; // Placeholder return value
+u32* __fastcall__ rvFetch(struct RiscV* cpu) {
+    return busLoad(&cpu->bus, cpu->pc);
 }
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
