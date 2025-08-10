@@ -77,10 +77,12 @@ static unsigned char y = 0;
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned int i;
 static unsigned int carry;
+static unsigned int borrow;
 static u32 imm4;
 
 static void __fastcall__ addU32toU32(u32 *dst, const u32 *src);
 static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ subU32fromU32(u32 *dst, const u32 *src);
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
@@ -143,11 +145,14 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 case 0x0: // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
                         printOP("add", &x, &y);
-
-                        addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs1]);
+                        
+                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                         addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     } else if (cpu->instr.funct7 == 0x20) { // sub
                         printOP("sub", &x, &y);
+
+                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                        subU32fromU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     }
                     break;
                 case 0x4: // xor
@@ -240,6 +245,22 @@ static void __fastcall__ addU32toU32(u32 *dst, const u32 *src) {
         unsigned int sum = (unsigned int)dst->b[i] + (unsigned int)src->b[i] + carry;
         dst->b[i] = (unsigned char)(sum & 0xFF);
         carry = (sum >> 8) & 0x1;  
+    }
+}
+
+static void __fastcall__ subU32fromU32(u32 *dst, const u32 *src) {
+    borrow = 0;
+
+    for (i = 0; i < 4; ++i) {
+        // Promote to signed int so we can detect borrow
+        int diff = (int)dst->b[i] - (int)src->b[i] - borrow;
+        if (diff < 0) {
+            diff += 256;    // wrap underflow
+            borrow = 1;
+        } else {
+            borrow = 0;
+        }
+        dst->b[i] = (unsigned char)diff;
     }
 }
 
