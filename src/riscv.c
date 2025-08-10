@@ -89,7 +89,9 @@ static unsigned char y = 0;
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned int i;
 static unsigned int carry;
+static unsigned char newCarry;
 static unsigned int borrow;
+static unsigned char shift;
 static u32 imm4;
 
 static void __fastcall__ addU32toU32(u32* dst, const u32* src);
@@ -324,13 +326,12 @@ static void __fastcall__ andU32withU32(u32* dst, const u32* src) {
 }
 
 static void __fastcall__ sllU32withU32(u32* dst, const u32* src) {
-    unsigned char shift = src->b[0]; // only use low byte of shift amount (RISC-V behavior)
+    shift = src->b[0] & 31;
 
     if (shift >= 32) {
         // Shift of 32 or more results in zero
-        for (i = 0; i < 4; ++i) {
+        for (i = 0; i++ < 4;)
             dst->b[i] = 0;
-        }
         return;
     }
 
@@ -345,9 +346,10 @@ static void __fastcall__ sllU32withU32(u32* dst, const u32* src) {
 
     if (shift > 0) {
         // Shift remaining bits
-        unsigned char carry = 0;
-        for (i = 0; i < 4; ++i) {
-            unsigned char newCarry = dst->b[i] >> (8 - shift);
+        carry = 0;
+        
+        for (i = 0; i++ < 4;) {
+            newCarry = dst->b[i] >> (8 - shift);
             dst->b[i] = (dst->b[i] << shift) | carry;
             carry = newCarry;
         }
@@ -355,21 +357,90 @@ static void __fastcall__ sllU32withU32(u32* dst, const u32* src) {
 }
 
 static void __fastcall__ srlU32withU32(u32* dst, const u32* src) {
+    shift = src->b[0] & 31;
    
+    if (shift >= 32) {
+        for (i = 0; i++ < 4;) 
+            dst->b[i] = 0;
+        return;
+    }
+
+    while (shift >= 8) {
+        dst->b[0] = dst->b[1];
+        dst->b[1] = dst->b[2];
+        dst->b[2] = dst->b[3];
+        dst->b[3] = 0;
+        shift -= 8;
+    }
+
+    if (shift > 0) {
+        carry = 0;
+        
+        for (i = 4; i-- > 0;) {
+            newCarry = dst->b[i] << (8 - shift);
+            dst->b[i] = (dst->b[i] >> shift) | carry;
+            carry = newCarry;
+        }
+    }
 }
 
 static void __fastcall__ sraU32withU32(u32* dst, const u32* src) {
-    srlU32withU32(dst, src);
+    unsigned char sign = dst->b[3] & 0x80; // top bit before shift
+    shift = src->b[0] & 31;
+    
+    if (shift >= 32) {
+        // Fill with all 1s if negative, else all 0s
+        unsigned char fill = sign ? 0xFF : 0x00;
+        
+        for (i = 0; i++ < 4;) 
+            dst->b[i] = fill;
+        return;
+    }
+
+    while (shift >= 8) {
+        dst->b[0] = dst->b[1];
+        dst->b[1] = dst->b[2];
+        dst->b[2] = dst->b[3];
+        dst->b[3] = sign ? 0xFF : 0x00;
+        shift -= 8;
+    }
+
+    if (shift > 0) {
+        carry = sign ? 0xFF << (8 - shift) : 0x00;
+        
+        for (i = 4; i-- > 0;) {
+            newCarry = dst->b[i] << (8 - shift);
+            dst->b[i] = (dst->b[i] >> shift) | carry;
+            carry = newCarry;
+        }
+    }
 }
 
 static void __fastcall__ sltU32withU32(u32* dst, const u32* src) {
+    unsigned char signDst = dst->b[3] & 0x80;
+    unsigned char signSrc = src->b[3] & 0x80;
 
-    
+    if (signDst != signSrc) {
+        dst->b[0] = signDst ? 1 : 0;
+        dst->b[1] = 0;
+        dst->b[2] = 0;
+        dst->b[3] = 0;
+        return;
+    }
 
+    sltuU32withU32(dst, src);
 }
 
 static void __fastcall__ sltuU32withU32(u32* dst, const u32* src) {
-   
+    borrow = (dst->b[0] < src->b[0]);
+    borrow = (dst->b[1] < (unsigned char)(src->b[1] + borrow));
+    borrow = (dst->b[2] < (unsigned char)(src->b[2] + borrow));
+    borrow = (dst->b[3] < (unsigned char)(src->b[3] + borrow));
+
+    dst->b[0] = borrow;
+    dst->b[1] = 0;
+    dst->b[2] = 0;
+    dst->b[3] = 0;
 }
 
 static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]) {

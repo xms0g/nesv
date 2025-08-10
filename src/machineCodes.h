@@ -38,3 +38,29 @@ static const unsigned char sll[] = {
     // sll t0, t1, t2 → sll x5, x6, x7  → 0x007312b3
     0xb3, 0x12, 0x73, 0x00
 };
+// li t1, 5
+// li t2, 1
+// srl t0, t1, t2 
+static const unsigned char srl[] = {
+	 // li t1, 5     → addi t1, x0, 5   → 0x00500313
+    0x13, 0x03, 0x50, 0x00,
+
+    // li t2, 3     → addi t2, x0, 3    → 0x00100393
+    0x93, 0x03, 0x10, 0x00,
+
+    // srl t0, t1, t2 → srl x5, x6, x7  → 0x007352b3
+    0xb3, 0x52, 0x73, 0x00
+};
+// li t1, 1
+// li t2, 5
+// slt t0, t1, t2 
+static const unsigned char slt[] = {
+	 // li t1, 1     → addi t1, x0, 1  → 0x00100313
+    0x13, 0x03, 0x10, 0x00,
+
+    // li t2, 3     → addi t2, x0, 3   → 0x00500393
+    0x93, 0x03, 0x50, 0x00,
+
+    // srl t0, t1, t2 → slt x5, x6, x7 → 0x007322b3
+    0xb3, 0x22, 0x73, 0x00
+};
