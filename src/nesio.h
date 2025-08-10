@@ -3,8 +3,10 @@
 
 #include "types.h"
 
-void __fastcall__ printOP(const unsigned char* op, unsigned char* x, unsigned char* y);
+void __fastcall__ print(const unsigned char* str);
 
-void __fastcall__ printREG(const unsigned char reg, const u32* val, unsigned char* x, unsigned char* y);
+void __fastcall__ printReg(const unsigned char reg, const u32* val);
+
+void __fastcall__ printImm(const u32* val);
 
 #endif

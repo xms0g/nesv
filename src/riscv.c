@@ -35,6 +35,18 @@
 #define X30 R_T5
 #define X31 R_T6
 
+#define PUT(str) \
+    vram_adr(NTADR_A(x, ++y)); \
+    print(str); \
+
+#define PUTR(r, v) \
+    vram_adr(NTADR_A(x, ++y)); \
+    printReg(r, v); \
+
+#define PUTI(v) \
+    vram_adr(NTADR_A(x, ++y)); \
+    printImm(v); \
+
 enum Registers {
     R_ZERO = 0,
     R_RA = 1,
@@ -80,9 +92,19 @@ static unsigned int carry;
 static unsigned int borrow;
 static u32 imm4;
 
-static void __fastcall__ addU32toU32(u32 *dst, const u32 *src);
-static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ subU32fromU32(u32 *dst, const u32 *src);
+static void __fastcall__ addU32toU32(u32* dst, const u32* src);
+static void __fastcall__ subU32fromU32(u32* dst, const u32* src);
+static void __fastcall__ xorU32withU32(u32* dst, const u32* src);
+static void __fastcall__ orU32withU32(u32* dst, const u32* src);
+static void __fastcall__ andU32withU32(u32* dst, const u32* src);
+static void __fastcall__ sllU32withU32(u32* dst, const u32* src);
+static void __fastcall__ srlU32withU32(u32* dst, const u32* src);
+static void __fastcall__ sraU32withU32(u32* dst, const u32* src);
+static void __fastcall__ sltU32withU32(u32* dst, const u32* src);
+static void __fastcall__ sltuU32withU32(u32* dst, const u32* src);
+
+
+static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]);
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
@@ -144,93 +166,112 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             switch (cpu->instr.funct3) {
                 case 0x0: // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
-                        printOP("add", &x, &y);
+                        PUT("add")
                         
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                         addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     } else if (cpu->instr.funct7 == 0x20) { // sub
-                        printOP("sub", &x, &y);
+                        PUT("sub")
 
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                         subU32fromU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     }
                     break;
                 case 0x4: // xor
-                    printOP("xor", &x, &y);
+                    PUT("xor");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    xorU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
                 case 0x6: // or
-                    printOP("or", &x, &y);
+                    PUT("or");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    orU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
                 case 0x7: // and
-                    printOP("and", &x, &y);
+                    PUT("and");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    andU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
                 case 0x1: // sll
-                    printOP("sll", &x, &y);
+                    PUT("sll");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sllU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
                 case 0x5: // srl/sra
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    
                     if (cpu->instr.funct7 == 0x00) { // srl
-                        printOP("srl", &x, &y);
+                        PUT("srl");
+                        srlU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     } else if (cpu->instr.funct7 == 0x20) { // sra
-                        printOP("sra", &x, &y);
+                        PUT("sra");
+                        sraU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     }
+                   
                     break;
                 case 0x2: // slt
-                    printOP("slt", &x, &y);
+                    PUT("slt");
+                    
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sltU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
                 case 0x3: // sltu
-                    printOP("sltu", &x, &y);
+                    PUT("sltu");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sltuU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
             }
 
-            printREG(cpu->instr.rd, &cpu->regs[cpu->instr.rd], &x, &y);
-            printREG(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1], &x, &y);
-            printREG(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2], &x, &y);
-          
-            vram_adr(NTADR_A(x, ++y));
-            vram_put(' ');
+            PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
+            PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
+            PUTR(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2]);
+            PUT(' ');
             break;
         case 0x13:
             switch (cpu->instr.funct3) {
                 case 0x0: // addi
-                    printOP("addi", &x, &y);
+                    PUT("addi");
 
                     addImm16toU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x4: // xori
-                    printOP("xori", &x, &y);
+                    PUT("xori");
                     break;
                 case 0x6: // ori
-                    printOP("ori", &x, &y);
+                    PUT("ori");
                     break;
                 case 0x7: // andi
-                    printOP("andi", &x, &y);
+                    PUT("andi");
                     break;
                 case 0x1: // slli
-                    printOP("slli", &x, &y);
+                    PUT("slli");
                     break;
                 case 0x5: // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
-                        printOP("srli", &x, &y);
+                        PUT("srli");
                     } else if (cpu->instr.funct7 == 0x20) { // srai
-                        printOP("srai", &x, &y);
+                        PUT("srai");
                     }
                     break;
                 case 0x2: // slti
-                    printOP("slti", &x, &y);
+                    PUT("slti");
                     break;
                 case 0x3: // sltiu
-                    printOP("sltiu", &x, &y);
+                    PUT("sltiu");
                     break;
                 default:
                     break;
             }
             
-            printREG(cpu->instr.rd, &cpu->regs[cpu->instr.rd], &x, &y);
-            printREG(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1], &x, &y);
-            printREG('i', &cpu->instr.imm, &x, &y);
-
-            vram_adr(NTADR_A(x, ++y));
-            vram_put(' ');
+            PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
+            PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
+            PUTI(&cpu->instr.imm);
+            PUT(' ');
             break;
         case 0x03: // Load instructions
             break;
@@ -238,7 +279,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
     }
 }
 
-static void __fastcall__ addU32toU32(u32 *dst, const u32 *src) {
+static void __fastcall__ addU32toU32(u32* dst, const u32* src) {
     carry = 0;
 
     for (i = 0; i < 4; ++i) {
@@ -248,7 +289,7 @@ static void __fastcall__ addU32toU32(u32 *dst, const u32 *src) {
     }
 }
 
-static void __fastcall__ subU32fromU32(u32 *dst, const u32 *src) {
+static void __fastcall__ subU32fromU32(u32* dst, const u32* src) {
     borrow = 0;
 
     for (i = 0; i < 4; ++i) {
@@ -264,7 +305,74 @@ static void __fastcall__ subU32fromU32(u32 *dst, const u32 *src) {
     }
 }
 
-static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]) {
+static void __fastcall__ xorU32withU32(u32* dst, const u32* src) {
+    for (i = 0; i < 4; ++i) {
+        dst->b[i] ^= src->b[i];
+    }
+}
+
+static void __fastcall__ orU32withU32(u32* dst, const u32* src) {
+    for (i = 0; i < 4; ++i) {
+        dst->b[i] |= src->b[i];
+    }
+}
+
+static void __fastcall__ andU32withU32(u32* dst, const u32* src) {
+    for (i = 0; i < 4; ++i) {
+        dst->b[i] &= src->b[i];
+    }
+}
+
+static void __fastcall__ sllU32withU32(u32* dst, const u32* src) {
+    unsigned char shift = src->b[0]; // only use low byte of shift amount (RISC-V behavior)
+
+    if (shift >= 32) {
+        // Shift of 32 or more results in zero
+        for (i = 0; i < 4; ++i) {
+            dst->b[i] = 0;
+        }
+        return;
+    }
+
+    while (shift >= 8) {
+        // Shift full bytes
+        dst->b[3] = dst->b[2];
+        dst->b[2] = dst->b[1];
+        dst->b[1] = dst->b[0];
+        dst->b[0] = 0;
+        shift -= 8;
+    }
+
+    if (shift > 0) {
+        // Shift remaining bits
+        unsigned char carry = 0;
+        for (i = 0; i < 4; ++i) {
+            unsigned char newCarry = dst->b[i] >> (8 - shift);
+            dst->b[i] = (dst->b[i] << shift) | carry;
+            carry = newCarry;
+        }
+    }
+}
+
+static void __fastcall__ srlU32withU32(u32* dst, const u32* src) {
+   
+}
+
+static void __fastcall__ sraU32withU32(u32* dst, const u32* src) {
+    srlU32withU32(dst, src);
+}
+
+static void __fastcall__ sltU32withU32(u32* dst, const u32* src) {
+
+    
+
+}
+
+static void __fastcall__ sltuU32withU32(u32* dst, const u32* src) {
+   
+}
+
+static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]) {
     /* Build 4-byte sign-extended immediate */
     imm4.b[0] = imm_bytes[0];      // low
     imm4.b[1] = imm_bytes[1];      // high (bit11 is sign)
