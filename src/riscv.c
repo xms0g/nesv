@@ -71,6 +71,14 @@ enum Registers {
     R_T6 = 31
 };
 
+static unsigned char x = 5;
+static unsigned char y = 0;
+
+#pragma bss-name(push, "ZEROPAGE")
+static unsigned int i;
+static unsigned int carry;
+static u32 imm4;
+
 static void __fastcall__ addU32toU32(u32 *dst, const u32 *src);
 static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]);
 
@@ -118,8 +126,6 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
 }
 
 void __fastcall__ rvExecute(struct RiscV* cpu) {
-    static unsigned char x = 5,y = 0;
-    
     switch (cpu->instr.opcode) {
         case 0x33:
             switch (cpu->instr.funct3) {
@@ -216,9 +222,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
     }
 }
 
-
 static void __fastcall__ addU32toU32(u32 *dst, const u32 *src) {
-    unsigned int i, carry = 0;
+    carry = 0;
 
     for (i = 0; i < 4; ++i) {
         unsigned int sum = (unsigned int)dst->b[i] + (unsigned int)src->b[i] + carry;
@@ -229,7 +234,6 @@ static void __fastcall__ addU32toU32(u32 *dst, const u32 *src) {
 
 static void __fastcall__ addImm16toU32(u32 *dst, const unsigned char imm_bytes[2]) {
     /* Build 4-byte sign-extended immediate */
-    u32 imm4;
     imm4.b[0] = imm_bytes[0];      // low
     imm4.b[1] = imm_bytes[1];      // high (bit11 is sign)
     /* sign extend byte 2..3 */

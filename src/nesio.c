@@ -1,13 +1,14 @@
 #include "nesio.h"
 #include "neslib.h"
 
+#pragma bss-name(push, "ZEROPAGE")
+static unsigned char i;
+
 void __fastcall__ printOP(const unsigned char* op, unsigned char* x, unsigned char* y) {
-    unsigned char i = 0;
-    
     vram_adr(NTADR_A(*x, ++*y));
-    while (op[i]) {
+    
+    for (i = 0; op[i]; ++i) {
         vram_put(op[i]);
-        ++i;
     }
 }
 

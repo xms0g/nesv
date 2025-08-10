@@ -16,8 +16,11 @@ static const unsigned char code[] = {
     0xb3, 0x02, 0x73, 0x00
 };
 
-static struct RiscV cpu;
+#pragma bss-name(push, "ZEROPAGE")
 static u32* instr;
+
+#pragma bss-name(push, "BSS")
+static struct RiscV cpu;
 
 void main(void) {
 	ppu_off(); // screen off

@@ -1,5 +1,6 @@
 #include "dram.h"
 
+#pragma bss-name(push, "ZEROPAGE")
 static u32 buffer;
 
 u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned int address) {

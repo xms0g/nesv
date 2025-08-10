@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define DRAM_SIZE 48
+#define DRAM_SIZE 1000 
 
 struct DRAM {
     unsigned char mem[DRAM_SIZE];
