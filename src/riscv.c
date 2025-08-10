@@ -101,8 +101,19 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
    
     switch (cpu->instr.opcode) {
         case 0x33: // R-type instructions
-            cpu->instr.rs2 = ((raw->b[2] >> 4) & 0x0F) | ((raw->b[3] & 0x01) << 4);
-            cpu->instr.funct7 = (raw->b[3] >> 1) & 0x7F;
+            switch (cpu->instr.funct3) {
+                case 0x0: // add/sub
+                case 0x4: // xor
+                case 0x6: // or
+                case 0x7: // and
+                case 0x1: // sll
+                case 0x5: // srl/sra
+                case 0x2: // slt
+                case 0x3: // sltu
+                    cpu->instr.rs2 = ((raw->b[2] >> 4) & 0x0F) | ((raw->b[3] & 0x01) << 4);
+                    cpu->instr.funct7 = (raw->b[3] >> 1) & 0x7F;
+                    break;
+            }
             break;
         case 0x13: // I-type instructions
         case 0x3: // Load instructions
