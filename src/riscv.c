@@ -37,15 +37,15 @@
 
 #define PUT(str) \
     vram_adr(NTADR_A(x, ++y)); \
-    print(str); \
+    print(str);
 
 #define PUTR(r, v) \
     vram_adr(NTADR_A(x, ++y)); \
-    printReg(r, v); \
+    printReg(r, v);
 
 #define PUTI(v) \
     vram_adr(NTADR_A(x, ++y)); \
-    printImm(v); \
+    printImm(v);
 
 enum Registers {
     R_ZERO = 0,
@@ -108,6 +108,27 @@ static void __fastcall__ sltuU32withU32(u32* dst, const u32* src);
 
 /* I-type Instructions */
 static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ orImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ andImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ sllImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ srlImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ sraImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ sltImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+static void __fastcall__ sltuImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
+
+static void __fastcall__ makeImm4fromImm2(const unsigned char imm[2])  {
+    imm4.b[0] = imm[0];
+    imm4.b[1] = imm[1];
+
+    if (imm[1] & 0x80) {
+        imm4.b[2] = 0xFF;
+        imm4.b[3] = 0xFF;
+    } else {
+        imm4.b[2] = 0x00;
+        imm4.b[3] = 0x00;
+    }
+}
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
@@ -242,32 +263,57 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 case 0x0: // addi
                     PUT("addi");
 
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     addImm16toU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x4: // xori
                     PUT("xori");
+                    
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    xorImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x6: // ori
                     PUT("ori");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    orImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x7: // andi
                     PUT("andi");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    andImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x1: // slli
                     PUT("slli");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sllImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x5: // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
                         PUT("srli");
+
+                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                        srlImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     } else if (cpu->instr.funct7 == 0x20) { // srai
                         PUT("srai");
+
+                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                        sraImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     }
                     break;
                 case 0x2: // slti
                     PUT("slti");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sltImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 case 0x3: // sltiu
                     PUT("sltiu");
+
+                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
+                    sltuImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
                 default:
                     break;
@@ -448,16 +494,63 @@ static void __fastcall__ sltuU32withU32(u32* dst, const u32* src) {
 
 static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]) {
     /* Build 4-byte sign-extended immediate */
-    imm4.b[0] = imm_bytes[0];      // low
-    imm4.b[1] = imm_bytes[1];      // high (bit11 is sign)
-    /* sign extend byte 2..3 */
-    if (imm_bytes[1] & 0x80) {     // if imm12 sign bit set (we earlier sign-extended to imm[1] byte)
-        imm4.b[2] = 0xFF;
-        imm4.b[3] = 0xFF;
-    } else {
-        imm4.b[2] = 0x00;
-        imm4.b[3] = 0x00;
-    }
+    makeImm4fromImm2(imm_bytes);
 
     addU32toU32(dst, &imm4);
+}
+
+static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    xorU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ orImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    orU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ andImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    andU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ sllImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    sllU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ srlImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    srlU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ sraImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    sraU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ sltImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    sltU32withU32(dst, &imm4);
+}
+
+static void __fastcall__ sltuImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
+    /* Build 4-byte sign-extended immediate */
+    makeImm4fromImm2(imm_bytes);
+
+    sltuU32withU32(dst, &imm4);
 }
