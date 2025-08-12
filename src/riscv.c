@@ -83,7 +83,7 @@ enum Registers {
     R_T6 = 31
 };
 
-static unsigned char x = 5;
+static unsigned char x = 1;
 static unsigned char y = 0;
 
 #pragma bss-name(push, "ZEROPAGE")
@@ -94,6 +94,7 @@ static unsigned int borrow;
 static unsigned char shift;
 static u32 imm4;
 
+/* R-type Instructions */
 static void __fastcall__ addU32toU32(u32* dst, const u32* src);
 static void __fastcall__ subU32fromU32(u32* dst, const u32* src);
 static void __fastcall__ xorU32withU32(u32* dst, const u32* src);
@@ -105,13 +106,15 @@ static void __fastcall__ sraU32withU32(u32* dst, const u32* src);
 static void __fastcall__ sltU32withU32(u32* dst, const u32* src);
 static void __fastcall__ sltuU32withU32(u32* dst, const u32* src);
 
-
+/* I-type Instructions */
 static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]);
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
-    cpu->regs[R_SP].b[0] = DRAM_SIZE;
-    cpu->regs[R_SP].b[1] = 0x0;
+    cpu->regs[R_SP].b[0] = 0xE8;
+    cpu->regs[R_SP].b[1] = 0x3;
+    cpu->regs[R_SP].b[2] = 0x0;
+    cpu->regs[R_SP].b[3] = 0x0;
     cpu->pc = 0;
 }
 
@@ -232,7 +235,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
             PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
             PUTR(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2]);
-            PUT(' ');
+            PUT((unsigned char*)' ');
             break;
         case 0x13:
             switch (cpu->instr.funct3) {
@@ -273,7 +276,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
             PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
             PUTI(&cpu->instr.imm);
-            PUT(' ');
+            PUT((unsigned char*)' ');
             break;
         case 0x03: // Load instructions
             break;
