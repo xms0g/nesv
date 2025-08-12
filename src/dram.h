@@ -10,8 +10,8 @@ struct DRAM {
     unsigned char mem[DRAM_SIZE];
 };
 
-u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned int address);
+u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address);
 
-void __fastcall__ drmStore(struct DRAM* dram, unsigned int address, u32* value);
+void __fastcall__ drmStore(struct DRAM* dram, unsigned long address, u32* value);
 
 #endif

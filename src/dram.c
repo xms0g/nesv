@@ -3,7 +3,7 @@
 #pragma bss-name(push, "ZEROPAGE")
 static u32 buffer;
 
-u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned int address) {
+u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address) {
     if (address >= DRAM_BASE && address <= DRAM_BASE + DRAM_SIZE - 4) {
         buffer.b[0] = dram->mem[address - DRAM_BASE];
         buffer.b[1] = dram->mem[address - DRAM_BASE + 1];
@@ -16,7 +16,7 @@ u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned int address) {
     return 0;
 }
 
-void __fastcall__ drmStore(struct DRAM* dram, unsigned int address, u32* value) {
+void __fastcall__ drmStore(struct DRAM* dram, unsigned long address, u32* value) {
     if (address < DRAM_SIZE - 3) {
         dram->mem[address] = value->b[0];
         dram->mem[address + 1] = value->b[1];
