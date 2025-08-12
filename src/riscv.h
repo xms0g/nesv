@@ -17,7 +17,7 @@ struct RiscVInstr {
 struct RiscV {
     u32 regs[32];
     struct RiscVInstr instr;
-    unsigned char pc;
+    unsigned int pc;
     struct Bus bus;
 };
 
