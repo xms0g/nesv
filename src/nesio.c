@@ -1,6 +1,6 @@
 #include "nesio.h"
 #include <stdlib.h>
-#include "neslib.h"
+
 
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned char i;
@@ -17,12 +17,12 @@ void __fastcall__ printReg(const unsigned char reg, const u32* val) {
     unsigned int value = val->b[0] | ((unsigned int)val->b[1] << 8);
     
     vram_put('x');
-    vram_put(reg + '0');
+    utoa(reg, buf, 10);
+    print(buf);
+    
     vram_put(':');
     
     utoa(value, buf, 10);
-
-    // Print each digit
     print(buf);
 }
 
@@ -35,6 +35,5 @@ void __fastcall__ printImm(const u32* val) {
     vram_put(':');
     
     utoa(value, buf, 10);
-    
     print(buf);
 }

@@ -239,7 +239,7 @@ void __fastcall__ vram_unrle(const unsigned char *data);
 
 //like a normal memcpy, but does not return anything
 
-void __fastcall__ memcpy(void *dst,void *src,unsigned int len);
+// void __fastcall__ memcpy(void *dst,void *src,unsigned int len);
 
 //like memset, but does not return anything
 

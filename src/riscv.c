@@ -35,18 +35,6 @@
 #define X30 R_T5
 #define X31 R_T6
 
-#define PUT(str) \
-    vram_adr(NTADR_A(x, ++y)); \
-    print(str);
-
-#define PUTR(r, v) \
-    vram_adr(NTADR_A(x, ++y)); \
-    printReg(r, v);
-
-#define PUTI(v) \
-    vram_adr(NTADR_A(x, ++y)); \
-    printImm(v);
-
 enum Registers {
     R_ZERO = 0,
     R_RA = 1,
@@ -256,9 +244,11 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             }
 
             PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
+            PUT(",");
             PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
+            PUT(",");
             PUTR(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2]);
-            PUT((unsigned char*)' ');
+            NEXT_LINE();
             break;
         case 0x13:
             switch (cpu->instr.funct3) {
