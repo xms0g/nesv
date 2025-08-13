@@ -5,8 +5,7 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 static u32* instr;
-
-#pragma bss-name(push, "BSS")
+#pragma bss-name(pop)
 static struct RiscV cpu;
 
 void main(void) {

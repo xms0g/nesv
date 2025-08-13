@@ -93,6 +93,7 @@ static unsigned char newCarry;
 static unsigned int borrow;
 static unsigned char shift;
 static u32 imm4;
+#pragma bss-name(pop)
 
 /* R-type Instructions */
 static void __fastcall__ addU32toU32(u32* dst, const u32* src);

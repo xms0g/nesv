@@ -2,6 +2,7 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 static u32 buffer;
+#pragma bss-name(pop)
 
 u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address) {
     if (address >= DRAM_BASE && address <= DRAM_BASE + DRAM_SIZE - 4) {
