@@ -142,7 +142,7 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
 }
 
 u32* __fastcall__ rvFetch(struct RiscV* cpu) {
-    return busLoad(&cpu->bus, cpu->pc);
+    return busLoad(&cpu->bus, cpu->pc, 32);
 }
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {

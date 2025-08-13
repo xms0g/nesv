@@ -8,7 +8,7 @@ struct Bus {
     struct DRAM dram;
 };
 
-u32* __fastcall__ busLoad(struct Bus* bus, unsigned long address);
+u32* __fastcall__ busLoad(struct Bus* bus, unsigned long address, unsigned char size);
 
 void __fastcall__ busStore(struct Bus* bus, unsigned long address, u32* value);
 
