@@ -140,7 +140,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
     cpu->instr.rs1 = ((raw->b[1] >> 7) & 1) | ((raw->b[2] & 0x0F) << 1); 
    
     switch (cpu->instr.opcode) {
-        case 0x33: // R-type instructions
+        case 0x33: // R-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // add/sub
                 case 0x4: // xor
@@ -155,8 +155,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                     break;
             }
             break;
-        case 0x13: // I-type instructions
-        case 0x3: // Load instructions
+        case 0x13: // I-type Instructions
+        case 0x3: // Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // addi
                 case 0x4: // xori
@@ -178,16 +178,16 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
 
 void __fastcall__ rvExecute(struct RiscV* cpu) {
     switch (cpu->instr.opcode) {
-        case 0x33:
+        case 0x33: // R-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
-                        PUT("add")
+                        PUT("add");
                         
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                         addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     } else if (cpu->instr.funct7 == 0x20) { // sub
-                        PUT("sub")
+                        PUT("sub");
 
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                         subU32fromU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
@@ -250,7 +250,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTR(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2]);
             NEXT_LINE();
             break;
-        case 0x13:
+        case 0x13: // I-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // addi
                     PUT("addi");

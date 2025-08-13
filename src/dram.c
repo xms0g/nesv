@@ -32,12 +32,23 @@ u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address, unsigned cha
     return 0;
 }
 
-void __fastcall__ drmStore(struct DRAM* dram, unsigned long address, u32* value) {
+void __fastcall__ drmStore(struct DRAM* dram, unsigned long address, unsigned char size, u32* value) {
     if (address >= DRAM_BASE && address <= DRAM_BASE + DRAM_SIZE - 4) {
         offset = address - DRAM_BASE;
-        dram->mem[offset] = value->b[0];
-        dram->mem[offset + 1] = value->b[1];
-        dram->mem[offset + 2] = value->b[2];
-        dram->mem[offset + 3] = value->b[3];
+
+        switch (size) {
+            case 8:
+                dram->mem[offset] = value->b[0];
+                memset(&dram->mem[offset + 1], 0x0, 3);
+            case 16:
+                dram->mem[offset] = value->b[0];
+                dram->mem[offset + 1] = value->b[1];
+                memset(&dram->mem[offset + 2], 0x0, 2);
+            case 32:
+                dram->mem[offset] = value->b[0];
+                dram->mem[offset + 1] = value->b[1];
+                dram->mem[offset + 2] = value->b[2];
+                dram->mem[offset + 3] = value->b[3];
+        }
     }
 }
