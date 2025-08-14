@@ -165,9 +165,10 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x1: // slli
                 case 0x5: // srli/srai
                 case 0x2: // slti
-                case 0x3: // sltiu
-                    cpu->instr.imm.b[0] = raw->b[2] >> 4; // immediate low byte
-                    cpu->instr.imm.b[1] = raw->b[3];      // immediate high byte    
+                case 0x3: { // sltiu
+                    cpu->instr.imm.v = (raw->v >> 20) & 0xFFF;
+                    if (cpu->instr.imm.v &  0x800)
+                        cpu->instr.imm.v |= 0xFFFFF000;
                     break;
                 default:
                     break;
@@ -243,11 +244,11 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     break;
             }
 
-            PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
             PUT(",");
-            PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
             PUT(",");
-            PUTR(cpu->instr.rs2, &cpu->regs[cpu->instr.rs2]);
+            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
             NEXT_LINE();
             break;
         case 0x13: // I-type Instructions

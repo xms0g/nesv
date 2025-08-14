@@ -18,13 +18,15 @@
 #define PUTR(r, v) do { \
     vram_adr(NTADR_A(x, y)); \
     printReg(r, v); \
-    NEXT_CHAR(4); \
+    if (v & 0x800) NEXT_CHAR(5); \
+    else NEXT_CHAR(4); \
     } while(0)
 
 #define PUTI(v) do { \
     vram_adr(NTADR_A(x, y)); \
     printImm(v); \
-    NEXT_CHAR(4); \
+    if (v & 0x800) NEXT_CHAR(5); \
+    else NEXT_CHAR(4); \
     } while(0)
 
 #define NEXT_LINE() do { \
@@ -34,8 +36,8 @@
 
 void __fastcall__ print(const unsigned char* str);
 
-void __fastcall__ printReg(const unsigned char reg, const u32* val);
+void __fastcall__ printReg(const unsigned char reg, const long val);
 
-void __fastcall__ printImm(const u32* val);
+void __fastcall__ printImm(const long val);
 
 #endif
