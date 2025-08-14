@@ -84,7 +84,6 @@ static u32 imm4;
 #pragma bss-name(pop)
 
 /* R-type Instructions */
-static void __fastcall__ addU32toU32(u32* dst, const u32* src);
 static void __fastcall__ subU32fromU32(u32* dst, const u32* src);
 static void __fastcall__ xorU32withU32(u32* dst, const u32* src);
 static void __fastcall__ orU32withU32(u32* dst, const u32* src);
@@ -96,7 +95,6 @@ static void __fastcall__ sltU32withU32(u32* dst, const u32* src);
 static void __fastcall__ sltuU32withU32(u32* dst, const u32* src);
 
 /* I-type Instructions */
-static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]);
 static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
 static void __fastcall__ orImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
 static void __fastcall__ andImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
@@ -185,8 +183,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     if (cpu->instr.funct7 == 0x00) { // add
                         PUT("add");
                         
-                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                        addU32toU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                        cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->regs[cpu->instr.rs2].v;
                     } else if (cpu->instr.funct7 == 0x20) { // sub
                         PUT("sub");
 
@@ -256,8 +253,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 case 0x0: // addi
                     PUT("addi");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    addImm16toU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
                     break;
                 case 0x4: // xori
                     PUT("xori");
@@ -321,16 +317,6 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             
             break;
         
-    }
-}
-
-static void __fastcall__ addU32toU32(u32* dst, const u32* src) {
-    carry = 0;
-
-    for (i = 0; i < 4; ++i) {
-        unsigned int sum = (unsigned int)dst->b[i] + (unsigned int)src->b[i] + carry;
-        dst->b[i] = (unsigned char)(sum & 0xFF);
-        carry = (sum >> 8) & 0x1;  
     }
 }
 
@@ -484,13 +470,6 @@ static void __fastcall__ sltuU32withU32(u32* dst, const u32* src) {
     dst->b[1] = 0;
     dst->b[2] = 0;
     dst->b[3] = 0;
-}
-
-static void __fastcall__ addImm16toU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    addU32toU32(dst, &imm4);
 }
 
 static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {

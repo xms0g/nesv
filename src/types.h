@@ -2,6 +2,7 @@
 #define TYPES_H
 
 typedef union {
+    unsigned long v;
     unsigned char b[4];
 } u32;
 
