@@ -81,6 +81,7 @@ static unsigned char newCarry;
 static unsigned int borrow;
 static unsigned char shift;
 static u32 imm4;
+static u32 addr;
 #pragma bss-name(pop)
 
 /* R-type Instructions */
@@ -140,7 +141,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
     cpu->instr.rs1 = (raw->v >> 15) & 0x1f;
    
     switch (cpu->instr.opcode) {
-        case 0x33: // R-type Instructions
+        case 0x33: { // R-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // add/sub
                 case 0x4: // xor
@@ -155,8 +156,9 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                     break;
             }
             break;
+        }
         case 0x13: // I-type Instructions
-        case 0x3: // Load Instructions
+        case 0x3: {// Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: // addi
                 case 0x4: // xori
@@ -167,20 +169,47 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x2: // slti
                 case 0x3: { // sltiu
                     cpu->instr.imm.v = (raw->v >> 20) & 0xFFF;
-                    
+                   
                     if (cpu->instr.imm.v & 0x800)
                         cpu->instr.imm.v |= 0xFFFFF000;
                     break;
-                default:
-                    break;
+                }
             }
             break;
+        }
+        case 0x23: {// S-type
+            switch (cpu->instr.funct3) {
+                case 0x0: // sb
+                case 0x1: // sh
+                case 0x2: { // sw
+                    cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
+                    cpu->instr.imm.v = ((raw->v >> 25) << 5) | cpu->instr.rd;
+                    
+                    if (cpu->instr.imm.v & 0x800) 
+                        cpu->instr.imm.v |= 0xFFFFF000;
+                    break;
+                }
+            }
+            break;
+        }
+        case 0x63: // B-type
+            break;
+        case 0x6F:// J-type
+            break;
+        case 0x67:
+            break;
+        case 0x37: // lui
+            cpu->instr.imm.v = raw->v & 0xFFFFF000;
+            break;
+        case 0x17: // auipc
+            break;
+            
     }
 }
 
 void __fastcall__ rvExecute(struct RiscV* cpu) {
     switch (cpu->instr.opcode) {
-        case 0x33: // R-type Instructions
+        case 0x33: { // R-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
@@ -242,7 +271,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sltU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
-                case 0x3: // sltu
+                }
+                case 0x3: { // sltu
                     PUT("sltu");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
@@ -258,7 +288,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
             NEXT_LINE();
             break;
-        case 0x13: // I-type Instructions
+        }
+        case 0x13: { // I-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // addi
                     PUT("addi");
@@ -321,18 +352,82 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sltuImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                default:
-                    break;
+                }
             }
             
-            PUTR(cpu->instr.rd, &cpu->regs[cpu->instr.rd]);
-            PUTR(cpu->instr.rs1, &cpu->regs[cpu->instr.rs1]);
-            PUTI(&cpu->instr.imm);
-            PUT((unsigned char*)' ');
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
+            PUT(", ");
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
+            PUT(", ");
+            PUTI(cpu->instr.imm.v);
+            NEXT_LINE();
             break;
-        case 0x03: // Load instructions
+        }
+        case 0x03: { // Load Instructions
+            switch (cpu->instr.funct3) {
+                case 0x0: { // lb
+                    // PUT("lb");
+
+                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    // cpu->regs[cpu->instr.rd].b[0] = busLoad(&cpu->bus, addr.v, 8)->b[0];
+                    // break;
+                }
+                case 0x1: { // lh
+                    // u32 addr;
+                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    // cpu->regs[cpu->instr.rd].v = (long int)(busLoad(&cpu->bus, addr.v, 16)[0] | (busLoad(&cpu->bus, addr.v, 16)[1] << 8));
+                    // break;
+                }
+                case 0x2: // lw
+                    // u32 addr;
+                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    // cpu->regs[cpu->instr.rd].v = (*busLoad(&cpu->bus, addr.v, 32)).v;
+                    // break;
+                case 0x4: // lbu
+                    break;
+                case 0x5: // lhu
+                    break;
+            }
+
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
+            PUT(", ");
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
+            PUT(", ");
+            PUTI(cpu->instr.imm.v);
+            NEXT_LINE();
+            break;
+        }
+        case 0x23: { // Store Instructions
+            switch (cpu->instr.funct3) {
+                case 0x0: { // sb
+                    // PUT("sb");
+
+                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    // busStore(&cpu->bus, addr.v, 8, &cpu->regs[cpu->instr.rs2]);
+                }
+            }
+
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
+            PUT(", ");
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
+            PUT(", ");
+            PUTI(cpu->instr.imm.v);
+            NEXT_LINE();
+            break;
+        }
+        case 0x37: { // lui
+            PUT("lui");
+
+            cpu->regs[cpu->instr.rd].v = cpu->instr.imm.v;
             
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
+            PUT(", ");
+            PUTI(cpu->instr.imm.v);
+            NEXT_LINE();
             break;
+        }
+        case 0x17: // auipc
+            break;    
         
     }
 }
