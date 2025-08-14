@@ -121,9 +121,9 @@ static void __fastcall__ makeImm4fromImm2(const unsigned char imm[2])  {
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->regs[X0].b[0] = 0x0;
-    // Set R_SP = 0x800003E8 (example stack start)
-    cpu->regs[R_SP].b[0] = 0xE8;       // lowest byte
-    cpu->regs[R_SP].b[1] = 0x03;
+    // Set R_SP = 0x80000400 (example stack start)
+    cpu->regs[R_SP].b[0] = 0x00;       // lowest byte
+    cpu->regs[R_SP].b[1] = 0x04;
     cpu->regs[R_SP].b[2] = 0x00;
     cpu->regs[R_SP].b[3] = 0x80;       // highest byte
     cpu->pc = DRAM_BASE;
