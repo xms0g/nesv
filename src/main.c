@@ -1,3 +1,4 @@
+#include <string.h>
 #include "neslib.h"
 #include "config.h"
 #include "riscv.h"
@@ -15,7 +16,7 @@ void main(void) {
 
 	rvInit(&cpu);
 
-	memcpy(&cpu.bus.dram.mem, xori, sizeof(xori));
+	memcpy(&cpu.bus.dram.mem, sb, sizeof(sb));
 	
 	while (1) { 
         instr = rvFetch(&cpu);

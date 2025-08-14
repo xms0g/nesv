@@ -7,7 +7,7 @@ unsigned long offset;
 #pragma bss-name(pop)
 
 u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address, unsigned char size) {
-    if (address >= DRAM_BASE && address <= DRAM_BASE + DRAM_SIZE - 4) {
+    if (address >= DRAM_BASE && address < DRAM_BASE + DRAM_SIZE) {
         offset = address - DRAM_BASE;
 
         switch (size) {
@@ -33,7 +33,7 @@ u32* __fastcall__ drmLoad(struct DRAM* dram, unsigned long address, unsigned cha
 }
 
 void __fastcall__ drmStore(struct DRAM* dram, unsigned long address, unsigned char size, u32* value) {
-    if (address >= DRAM_BASE && address <= DRAM_BASE + DRAM_SIZE - 4) {
+    if (address >= DRAM_BASE && address < DRAM_BASE + DRAM_SIZE) {
         offset = address - DRAM_BASE;
 
         switch (size) {
