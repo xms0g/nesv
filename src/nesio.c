@@ -3,13 +3,12 @@
 
 
 #pragma bss-name(push, "ZEROPAGE")
-static unsigned char i;
 static char buf[6];
 #pragma bss-name(pop)
 
 void __fastcall__ print(const unsigned char* str) {
-    for (i = 0; str[i]; ++i) {
-        vram_put(str[i]);
+    while (*str) {
+        vram_put(*str++);
     }
 }
 

@@ -5,9 +5,7 @@
 #include "neslib.h"
 #include "types.h"
 
-#define NEXT_CHAR(n) do { \
-    x += (n); \
-    } while(0)
+#define NEXT_CHAR(n) do { x += (n); } while(0)
 
 #define PUT(str) do { \
     vram_adr(NTADR_A(x, y)); \
@@ -29,10 +27,7 @@
     else NEXT_CHAR(4); \
     } while(0)
 
-#define NEXT_LINE() do { \
-    x = 1; \
-    y++; \
-    } while(0)
+#define NEXT_LINE() do { x = 1; ++y; } while(0)
 
 void __fastcall__ print(const unsigned char* str);
 
