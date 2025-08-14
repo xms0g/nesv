@@ -118,6 +118,8 @@ static void __fastcall__ makeImm4fromImm2(const unsigned char imm[2])  {
 }
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
+    memset(cpu->regs, 0, sizeof(u32) * 32);
+    
     cpu->regs[X0].b[0] = 0x0;
     // Set R_SP = 0x80000400 (example stack start)
     cpu->regs[R_SP].b[0] = 0x00;       // lowest byte
@@ -132,10 +134,10 @@ u32* __fastcall__ rvFetch(struct RiscV* cpu) {
 }
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
-    cpu->instr.opcode = raw->b[0] & 0x7F;
-    cpu->instr.rd = ((raw->b[0] >> 7) & 0x01) | ((raw->b[1] & 0x0F) << 1);
-    cpu->instr.funct3 = (raw->b[1] >> 4) & 0x07;
-    cpu->instr.rs1 = ((raw->b[1] >> 7) & 1) | ((raw->b[2] & 0x0F) << 1); 
+    cpu->instr.opcode = raw->v & 0x7F;
+    cpu->instr.rd = ((raw->v >> 7) & 0x1f);
+    cpu->instr.funct3 = (raw->v >> 12) & 0x07;
+    cpu->instr.rs1 = (raw->v >> 15) & 0x1f;
    
     switch (cpu->instr.opcode) {
         case 0x33: // R-type Instructions
@@ -148,8 +150,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x5: // srl/sra
                 case 0x2: // slt
                 case 0x3: // sltu
-                    cpu->instr.rs2 = ((raw->b[2] >> 4) & 0x0F) | ((raw->b[3] & 0x01) << 4);
-                    cpu->instr.funct7 = (raw->b[3] >> 1) & 0x7F;
+                    cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
+                    cpu->instr.funct7 = (raw->v >> 25) & 0x7F;
                     break;
             }
             break;
@@ -165,7 +167,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x2: // slti
                 case 0x3: { // sltiu
                     cpu->instr.imm.v = (raw->v >> 20) & 0xFFF;
-                    if (cpu->instr.imm.v &  0x800)
+                    
+                    if (cpu->instr.imm.v & 0x800)
                         cpu->instr.imm.v |= 0xFFFFF000;
                     break;
                 default:
@@ -179,7 +182,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
     switch (cpu->instr.opcode) {
         case 0x33: // R-type Instructions
             switch (cpu->instr.funct3) {
-                case 0x0: // add/sub
+                case 0x0: { // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
                         PUT("add");
                         
@@ -191,31 +194,36 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                         subU32fromU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     }
                     break;
-                case 0x4: // xor
+                }
+                case 0x4: { // xor
                     PUT("xor");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     xorU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
-                case 0x6: // or
+                }
+                case 0x6: { // or
                     PUT("or");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     orU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
-                case 0x7: // and
+                }
+                case 0x7: { // and
                     PUT("and");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     andU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
-                case 0x1: // sll
+                }
+                case 0x1: { // sll
                     PUT("sll");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sllU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
-                case 0x5: // srl/sra
+                }
+                case 0x5: { // srl/sra
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     
                     if (cpu->instr.funct7 == 0x00) { // srl
@@ -227,7 +235,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     }
                    
                     break;
-                case 0x2: // slt
+                }
+                case 0x2: { // slt
                     PUT("slt");
                     
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
@@ -239,6 +248,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sltuU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
                     break;
+                }
             }
 
             PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
@@ -250,36 +260,41 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             break;
         case 0x13: // I-type Instructions
             switch (cpu->instr.funct3) {
-                case 0x0: // addi
+                case 0x0: { // addi
                     PUT("addi");
 
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
                     break;
-                case 0x4: // xori
+                }
+                case 0x4: { // xori
                     PUT("xori");
                     
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     xorImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                case 0x6: // ori
+                }
+                case 0x6: { // ori
                     PUT("ori");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     orImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                case 0x7: // andi
+                }
+                case 0x7: {// andi
                     PUT("andi");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     andImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                case 0x1: // slli
+                }
+                case 0x1: { // slli
                     PUT("slli");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sllImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                case 0x5: // srli/srai
+                }
+                case 0x5: { // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
                         PUT("srli");
 
@@ -292,13 +307,15 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                         sraImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     }
                     break;
-                case 0x2: // slti
+                }
+                case 0x2: { // slti
                     PUT("slti");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
                     sltImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
                     break;
-                case 0x3: // sltiu
+                }
+                case 0x3: { // sltiu
                     PUT("sltiu");
 
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
