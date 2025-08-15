@@ -72,7 +72,7 @@ enum Registers {
 };
 
 static unsigned char x = 1;
-static unsigned char y = 0;
+static unsigned char y = 1;
 
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned int i;
@@ -119,6 +119,8 @@ static void __fastcall__ makeImm4fromImm2(const unsigned char imm[2])  {
 }
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
+    vram_adr(NTADR_A(x, y));
+    
     memset(cpu->regs, 0, sizeof(u32) * 32);
     
     cpu->regs[X0].b[0] = 0x0;
