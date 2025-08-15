@@ -16,6 +16,7 @@ void __fastcall__ printReg(const unsigned char reg, const long val) {
     vram_put('x');
     utoa(reg, buf, 10);
     print(buf);
+    memset(buf, 0, 6);
     
     vram_put(':');
     
