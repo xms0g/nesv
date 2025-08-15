@@ -71,54 +71,15 @@ enum Registers {
     R_T6 = 31
 };
 
-static unsigned char x = 1;
-static unsigned char y = 1;
+
 
 #pragma bss-name(push, "ZEROPAGE")
-static unsigned int i;
-static unsigned int carry;
-static unsigned char newCarry;
-static unsigned int borrow;
-static unsigned char shift;
-static u32 imm4;
-static u32 addr;
+static unsigned char x;
+static unsigned char y;
 #pragma bss-name(pop)
 
-/* R-type Instructions */
-static void __fastcall__ subU32fromU32(u32* dst, const u32* src);
-static void __fastcall__ xorU32withU32(u32* dst, const u32* src);
-static void __fastcall__ orU32withU32(u32* dst, const u32* src);
-static void __fastcall__ andU32withU32(u32* dst, const u32* src);
-static void __fastcall__ sllU32withU32(u32* dst, const u32* src);
-static void __fastcall__ srlU32withU32(u32* dst, const u32* src);
-static void __fastcall__ sraU32withU32(u32* dst, const u32* src);
-static void __fastcall__ sltU32withU32(u32* dst, const u32* src);
-static void __fastcall__ sltuU32withU32(u32* dst, const u32* src);
-
-/* I-type Instructions */
-static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ orImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ andImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ sllImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ srlImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ sraImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ sltImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-static void __fastcall__ sltuImm16withU32(u32* dst, const unsigned char imm_bytes[2]);
-
-static void __fastcall__ makeImm4fromImm2(const unsigned char imm[2])  {
-    imm4.b[0] = imm[0];
-    imm4.b[1] = imm[1];
-
-    if (imm[1] & 0x80) {
-        imm4.b[2] = 0xFF;
-        imm4.b[3] = 0xFF;
-    } else {
-        imm4.b[2] = 0x00;
-        imm4.b[3] = 0x00;
-    }
-}
-
 void __fastcall__ rvInit(struct RiscV* cpu) {
+    x = 1,y = 1;
     vram_adr(NTADR_A(x, y));
     
     memset(cpu->regs, 0, sizeof(u32) * 32);
@@ -220,73 +181,63 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                         cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->regs[cpu->instr.rs2].v;
                     } else if (cpu->instr.funct7 == 0x20) { // sub
                         PUT("sub");
-
-                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                        subU32fromU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                        
+                        cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v - cpu->regs[cpu->instr.rs2].v;
                     }
                     break;
                 }
                 case 0x4: { // xor
                     PUT("xor");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    xorU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v ^ cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x6: { // or
                     PUT("or");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    orU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v | cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x7: { // and
                     PUT("and");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    andU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v & cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x1: { // sll
                     PUT("sll");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sllU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v << (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     break;
                 }
                 case 0x5: { // srl/sra
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    
                     if (cpu->instr.funct7 == 0x00) { // srl
                         PUT("srl");
-                        srlU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                        
+                        cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v >> (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // sra
                         PUT("sra");
-                        sraU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+
+                        cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v >> (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     }
-                   
                     break;
                 }
                 case 0x2: { // slt
                     PUT("slt");
                     
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sltU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v < (long)cpu->regs[cpu->instr.rs2].v ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltu
                     PUT("sltu");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sltuU32withU32(&cpu->regs[cpu->instr.rd], &cpu->regs[cpu->instr.rs2]);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v < cpu->regs[cpu->instr.rs2].v ? 1: 0;
                     break;
                 }
             }
 
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
-            PUT(",");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
-            PUT(",");
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT((unsigned char*)' ');
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); PUT((unsigned char*)' ');
             PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
             NEXT_LINE();
             break;
@@ -302,65 +253,55 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 case 0x4: { // xori
                     PUT("xori");
                     
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    xorImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v ^ cpu->instr.imm.v;
                     break;
                 }
                 case 0x6: { // ori
                     PUT("ori");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    orImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v | cpu->instr.imm.v;
                     break;
                 }
                 case 0x7: {// andi
                     PUT("andi");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    andImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v & cpu->instr.imm.v;
                     break;
                 }
                 case 0x1: { // slli
                     PUT("slli");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sllImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v << (cpu->instr.imm.v & 0x1F);
                     break;
                 }
                 case 0x5: { // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
                         PUT("srli");
 
-                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                        srlImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                        cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v >> (cpu->instr.imm.v & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // srai
                         PUT("srai");
 
-                        cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                        sraImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                        cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v >> (cpu->instr.imm.v & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slti
                     PUT("slti");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sltImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v < (long)cpu->instr.imm.v ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltiu
                     PUT("sltiu");
 
-                    cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1];
-                    sltuImm16withU32(&cpu->regs[cpu->instr.rd], cpu->instr.imm.b);
+                    cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v < cpu->instr.imm.v ? 1: 0;
                     break;
                 }
             }
             
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
-            PUT(", ");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
-            PUT(", ");
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT((unsigned char*)' ');
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUT((unsigned char*)' ');
             PUTI(cpu->instr.imm.v);
             NEXT_LINE();
             break;
@@ -432,212 +373,4 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             break;    
         
     }
-}
-
-static void __fastcall__ subU32fromU32(u32* dst, const u32* src) {
-    borrow = 0;
-
-    for (i = 0; i < 4; ++i) {
-        // Promote to signed int so we can detect borrow
-        int diff = (int)dst->b[i] - (int)src->b[i] - borrow;
-        if (diff < 0) {
-            diff += 256;    // wrap underflow
-            borrow = 1;
-        } else {
-            borrow = 0;
-        }
-        dst->b[i] = (unsigned char)diff;
-    }
-}
-
-static void __fastcall__ xorU32withU32(u32* dst, const u32* src) {
-    for (i = 0; i < 4; ++i) {
-        dst->b[i] ^= src->b[i];
-    }
-}
-
-static void __fastcall__ orU32withU32(u32* dst, const u32* src) {
-    for (i = 0; i < 4; ++i) {
-        dst->b[i] |= src->b[i];
-    }
-}
-
-static void __fastcall__ andU32withU32(u32* dst, const u32* src) {
-    for (i = 0; i < 4; ++i) {
-        dst->b[i] &= src->b[i];
-    }
-}
-
-static void __fastcall__ sllU32withU32(u32* dst, const u32* src) {
-    shift = src->b[0] & 31;
-
-    if (shift >= 32) {
-        // Shift of 32 or more results in zero
-        for (i = 0; i++ < 4;)
-            dst->b[i] = 0;
-        return;
-    }
-
-    while (shift >= 8) {
-        // Shift full bytes
-        dst->b[3] = dst->b[2];
-        dst->b[2] = dst->b[1];
-        dst->b[1] = dst->b[0];
-        dst->b[0] = 0;
-        shift -= 8;
-    }
-
-    if (shift > 0) {
-        // Shift remaining bits
-        carry = 0;
-        
-        for (i = 0; i++ < 4;) {
-            newCarry = dst->b[i] >> (8 - shift);
-            dst->b[i] = (dst->b[i] << shift) | carry;
-            carry = newCarry;
-        }
-    }
-}
-
-static void __fastcall__ srlU32withU32(u32* dst, const u32* src) {
-    shift = src->b[0] & 31;
-   
-    if (shift >= 32) {
-        for (i = 0; i++ < 4;) 
-            dst->b[i] = 0;
-        return;
-    }
-
-    while (shift >= 8) {
-        dst->b[0] = dst->b[1];
-        dst->b[1] = dst->b[2];
-        dst->b[2] = dst->b[3];
-        dst->b[3] = 0;
-        shift -= 8;
-    }
-
-    if (shift > 0) {
-        carry = 0;
-        
-        for (i = 4; i-- > 0;) {
-            newCarry = dst->b[i] << (8 - shift);
-            dst->b[i] = (dst->b[i] >> shift) | carry;
-            carry = newCarry;
-        }
-    }
-}
-
-static void __fastcall__ sraU32withU32(u32* dst, const u32* src) {
-    unsigned char sign = dst->b[3] & 0x80; // top bit before shift
-    shift = src->b[0] & 31;
-    
-    if (shift >= 32) {
-        // Fill with all 1s if negative, else all 0s
-        unsigned char fill = sign ? 0xFF : 0x00;
-        
-        for (i = 0; i++ < 4;) 
-            dst->b[i] = fill;
-        return;
-    }
-
-    while (shift >= 8) {
-        dst->b[0] = dst->b[1];
-        dst->b[1] = dst->b[2];
-        dst->b[2] = dst->b[3];
-        dst->b[3] = sign ? 0xFF : 0x00;
-        shift -= 8;
-    }
-
-    if (shift > 0) {
-        carry = sign ? 0xFF << (8 - shift) : 0x00;
-        
-        for (i = 4; i-- > 0;) {
-            newCarry = dst->b[i] << (8 - shift);
-            dst->b[i] = (dst->b[i] >> shift) | carry;
-            carry = newCarry;
-        }
-    }
-}
-
-static void __fastcall__ sltU32withU32(u32* dst, const u32* src) {
-    unsigned char signDst = dst->b[3] & 0x80;
-    unsigned char signSrc = src->b[3] & 0x80;
-
-    if (signDst != signSrc) {
-        dst->b[0] = signDst ? 1 : 0;
-        dst->b[1] = 0;
-        dst->b[2] = 0;
-        dst->b[3] = 0;
-        return;
-    }
-
-    sltuU32withU32(dst, src);
-}
-
-static void __fastcall__ sltuU32withU32(u32* dst, const u32* src) {
-    borrow = (dst->b[0] < src->b[0]);
-    borrow = (dst->b[1] < (unsigned char)(src->b[1] + borrow));
-    borrow = (dst->b[2] < (unsigned char)(src->b[2] + borrow));
-    borrow = (dst->b[3] < (unsigned char)(src->b[3] + borrow));
-
-    dst->b[0] = borrow;
-    dst->b[1] = 0;
-    dst->b[2] = 0;
-    dst->b[3] = 0;
-}
-
-static void __fastcall__ xorImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    xorU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ orImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    orU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ andImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    andU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ sllImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    sllU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ srlImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    srlU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ sraImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    sraU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ sltImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    sltU32withU32(dst, &imm4);
-}
-
-static void __fastcall__ sltuImm16withU32(u32* dst, const unsigned char imm_bytes[2]) {
-    /* Build 4-byte sign-extended immediate */
-    makeImm4fromImm2(imm_bytes);
-
-    sltuU32withU32(dst, &imm4);
 }
