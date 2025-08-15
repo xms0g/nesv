@@ -3,7 +3,7 @@
 
 
 #pragma bss-name(push, "ZEROPAGE")
-static char buf[6];
+static char buf[5];
 #pragma bss-name(pop)
 
 void __fastcall__ print(const unsigned char* str) {
@@ -16,22 +16,17 @@ void __fastcall__ printReg(const unsigned char reg, const long val) {
     vram_put('x');
     utoa(reg, buf, 10);
     print(buf);
-    memset(buf, 0, 6);
     
     vram_put(':');
     
     itoa(val, buf, 10);
     print(buf);
-    memset(buf, 0, 6);
 }
 
 void __fastcall__ printImm(const long val) {
     vram_put('i');
-    vram_put('m');
-    vram_put('m');
     vram_put(':');
     
     itoa(val, buf, 10);
     print(buf);
-    memset(buf, 0, 6);
 }

@@ -14,14 +14,12 @@
 
 #define PUTR(r, v) do { \
     printReg(r, v); \
-    if (v & 0x800) NEXT_CHAR(5); \
-    else NEXT_CHAR(4); \
+    NEXT_CHAR(8); \
     } while(0)
 
 #define PUTI(v) do { \
     printImm(v); \
-    if (v & 0x800) NEXT_CHAR(5); \
-    else NEXT_CHAR(4); \
+    NEXT_CHAR(8); \
     } while(0)
 
 #define NEXT_LINE() do { x = 1; ++y; vram_adr(NTADR_A(x, y)); } while(0)
