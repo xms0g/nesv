@@ -16,12 +16,12 @@ void main(void) {
 
 	rvInit(&cpu);
 
-	memcpy(&cpu.bus.dram.mem, sb, sizeof(sb));
+	memcpy(&cpu.bus.dram.mem, sll, sizeof(sll));
 	
 	while (1) { 
         instr = rvFetch(&cpu);
 
-		if (instr->b[0] == 0) break;
+		if (instr->v == 0) break;
 
         rvDecode(&cpu, instr);
 
