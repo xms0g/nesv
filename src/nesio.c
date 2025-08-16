@@ -11,6 +11,16 @@ void __fastcall__ print(const unsigned char* str) {
     }
 }
 
+void __fastcall__ sprint(const long val) {
+    ltoa(val, buf, 10);
+    print(buf);
+}
+
+void __fastcall__ uprint(const unsigned long val) {
+    ultoa(val, buf, 10);
+    print(buf);
+}
+
 void __fastcall__ printReg(const unsigned char reg, const long val) {
     utoa(reg, buf, 10);
     
@@ -18,12 +28,5 @@ void __fastcall__ printReg(const unsigned char reg, const long val) {
     print(buf);
     print(":");
     
-    ltoa(val, buf, 10);
-    print(buf);
-}
-
-void __fastcall__ printImm(const long val) {
-    ltoa(val, buf, 10);
-    print("i:");
-    print(buf);
+    sprint(val);
 }

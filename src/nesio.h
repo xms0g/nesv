@@ -17,8 +17,15 @@
     NEXT_CHAR(12); \
     } while(0)
 
-#define PUTI(v) do { \
-    printImm(v); \
+#define PUTSI(v) do { \
+    print("i:"); \
+    sprint(v); \
+    NEXT_CHAR(12); \
+    } while(0)
+
+#define PUTUI(v) do { \
+    print("i:"); \
+    uprint(v); \
     NEXT_CHAR(12); \
     } while(0)
 
@@ -26,8 +33,10 @@
 
 void __fastcall__ print(const unsigned char* str);
 
-void __fastcall__ printReg(const unsigned char reg, const long val);
+void __fastcall__ sprint(const long val);
 
-void __fastcall__ printImm(const long val);
+void __fastcall__ uprint(const unsigned long val);
+
+void __fastcall__ printReg(const unsigned char reg, const long val);
 
 #endif
