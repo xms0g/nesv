@@ -71,21 +71,20 @@ enum Registers {
     R_T6 = 31
 };
 
-
-
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned char x;
 static unsigned char y;
+static u32 addr;
 #pragma bss-name(pop)
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
-    x = 1,y = 1;
+    x = 1, y = 1;
     vram_adr(NTADR_A(x, y));
     
     memset(cpu->regs, 0, sizeof(u32) * 32);
     
     cpu->regs[X0].b[0] = 0x0;
-    // Set R_SP = 0x80000400 (example stack start)
+    // Set R_SP = 0x80000400
     cpu->regs[R_SP].b[0] = 0x00;       // lowest byte
     cpu->regs[R_SP].b[1] = 0x04;
     cpu->regs[R_SP].b[2] = 0x00;
@@ -99,7 +98,7 @@ u32* __fastcall__ rvFetch(struct RiscV* cpu) {
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
     cpu->instr.opcode = raw->v & 0x7F;
-    cpu->instr.rd = ((raw->v >> 7) & 0x1f);
+    cpu->instr.rd = (raw->v >> 7) & 0x1f;
     cpu->instr.funct3 = (raw->v >> 12) & 0x07;
     cpu->instr.rs1 = (raw->v >> 15) & 0x1f;
    
@@ -121,15 +120,15 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             break;
         }
         case 0x13: // I-type Instructions
-        case 0x3: {// Load Instructions
+        case 0x3: { // Load Instructions
             switch (cpu->instr.funct3) {
-                case 0x0: // addi
-                case 0x4: // xori
+                case 0x0: // addi/lb
+                case 0x4: // xori/lbu
                 case 0x6: // ori
                 case 0x7: // andi
-                case 0x1: // slli
-                case 0x5: // srli/srai
-                case 0x2: // slti
+                case 0x1: // slli/lh
+                case 0x5: // srli/srai/lhu
+                case 0x2: // slti/lw
                 case 0x3: { // sltiu
                     cpu->instr.imm.v = (raw->v >> 20) & 0xFFF;
                    
@@ -140,13 +139,13 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             }
             break;
         }
-        case 0x23: {// S-type
+        case 0x23: { // S-type
             switch (cpu->instr.funct3) {
                 case 0x0: // sb
                 case 0x1: // sh
                 case 0x2: { // sw
                     cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
-                    cpu->instr.imm.v = ((raw->v >> 25) << 5) | cpu->instr.rd;
+                    cpu->instr.imm.v = (((raw->v >> 25) & 0x7F) << 5) | ((raw->v >> 7) & 0x1f);
                     
                     if (cpu->instr.imm.v & 0x800) 
                         cpu->instr.imm.v |= 0xFFFFF000;
@@ -236,8 +235,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 }
             }
 
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT((unsigned char*)' ');
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); PUT((unsigned char*)' ');
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT(" ");
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); PUT(" ");
             PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
             NEXT_LINE();
             break;
@@ -300,8 +299,8 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 }
             }
             
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT((unsigned char*)' ');
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUT((unsigned char*)' ');
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);PUT(" ");;
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUT(" ");;
             PUTI(cpu->instr.imm.v);
             NEXT_LINE();
             break;
@@ -309,11 +308,11 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
         case 0x03: { // Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // lb
-                    // PUT("lb");
+                    PUT("lb");
 
-                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
-                    // cpu->regs[cpu->instr.rd].b[0] = busLoad(&cpu->bus, addr.v, 8)->b[0];
-                    // break;
+                    addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    cpu->regs[cpu->instr.rd].v = busLoad(&cpu->bus, addr.v, 8)->v;
+                    break;
                 }
                 case 0x1: { // lh
                     // u32 addr;
@@ -332,29 +331,23 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     break;
             }
 
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
-            PUT(", ");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
-            PUT(", ");
-            PUTI(cpu->instr.imm.v);
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);PUT(" ");
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUTI(cpu->instr.imm.v);
             NEXT_LINE();
             break;
         }
         case 0x23: { // Store Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // sb
-                    // PUT("sb");
+                    PUT("sb");
 
-                    // addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
-                    // busStore(&cpu->bus, addr.v, 8, &cpu->regs[cpu->instr.rs2]);
+                    addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
+                    busStore(&cpu->bus, addr.v, 8, &cpu->regs[cpu->instr.rs2]);
                 }
             }
 
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
-            PUT(", ");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);
-            PUT(", ");
-            PUTI(cpu->instr.imm.v);
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUTI(cpu->instr.imm.v);PUT(" ");
+            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
             NEXT_LINE();
             break;
         }
