@@ -161,7 +161,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
         case 0x67:
             break;
         case 0x37: // lui
-            cpu->instr.imm.v = raw->v & 0xFFFFF000;
+            cpu->instr.imm.v = (long)(raw->v >> 12) & 0xFFFFF;
             break;
         case 0x17: // auipc
             break;
@@ -299,10 +299,9 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 }
             }
             
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);PUT(" ");;
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUT(" ");;
-            PUTI(cpu->instr.imm.v);
-            NEXT_LINE();
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
+            PUTI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x03: { // Load Instructions
@@ -331,9 +330,9 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     break;
             }
 
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);PUT(" ");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUTI(cpu->instr.imm.v);
-            NEXT_LINE();
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
+            PUTI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x23: { // Store Instructions
@@ -346,20 +345,18 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                 }
             }
 
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);PUTI(cpu->instr.imm.v);PUT(" ");
-            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
-            NEXT_LINE();
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); NEXT_LINE();
+            PUTI(cpu->instr.imm.v);NEXT_LINE();
+            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
             break;
         }
         case 0x37: { // lui
             PUT("lui");
 
-            cpu->regs[cpu->instr.rd].v = cpu->instr.imm.v;
+            cpu->regs[cpu->instr.rd].v = cpu->instr.imm.v << 12;
             
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);
-            PUT(", ");
-            PUTI(cpu->instr.imm.v);
-            NEXT_LINE();
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x17: // auipc
