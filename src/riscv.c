@@ -301,7 +301,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             
             PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
             PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTI(cpu->instr.imm.v);NEXT_LINE();
+            PUTSI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x03: { // Load Instructions
@@ -310,7 +310,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     PUT("lb");
 
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm.v;
-                    cpu->regs[cpu->instr.rd].v = busLoad(&cpu->bus, addr.v, 8)->v;
+                    cpu->regs[cpu->instr.rd].b[0] = busLoad(&cpu->bus, addr.v, 8)->b[0];
                     break;
                 }
                 case 0x1: { // lh
@@ -332,7 +332,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
 
             PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
             PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTI(cpu->instr.imm.v);NEXT_LINE();
+            PUTSI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x23: { // Store Instructions
@@ -346,7 +346,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             }
 
             PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); NEXT_LINE();
-            PUTI(cpu->instr.imm.v);NEXT_LINE();
+            PUTSI(cpu->instr.imm.v);NEXT_LINE();
             PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
             break;
         }
@@ -356,7 +356,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             cpu->regs[cpu->instr.rd].v = cpu->instr.imm.v << 12;
             
             PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTI(cpu->instr.imm.v);NEXT_LINE();
+            PUTSI(cpu->instr.imm.v);NEXT_LINE();
             break;
         }
         case 0x17: // auipc
