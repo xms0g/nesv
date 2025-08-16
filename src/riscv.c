@@ -83,7 +83,7 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     
     memset(cpu->regs, 0, sizeof(u32) * 32);
     
-    cpu->regs[X0].b[0] = 0x0;
+    cpu->regs[X0].v = 0x0;
     // Set R_SP = 0x80000400
     cpu->regs[R_SP].b[0] = 0x00;       // lowest byte
     cpu->regs[R_SP].b[1] = 0x04;
