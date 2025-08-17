@@ -79,14 +79,35 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             }
             break;
         }
-        case 0x63: // B-type
+        case 0x63: { // B-type
+            switch (cpu->instr.funct3) {
+                case 0x0: // beq
+                case 0x1: // bne
+                case 0x4: // blt
+                case 0x5: // bge
+                case 0x6: // bltu
+                case 0x7: { // bgeu
+                    long imm = 0;
+
+                    imm |= ((raw->v >> 31) & 0x1) << 12;  // imm[12]
+                    imm |= ((raw->v >> 25) & 0x3F) << 5;  // imm[10:5]
+                    imm |= ((raw->v >> 8)  & 0xF) << 1;   // imm[4:1]
+                    imm |= ((raw->v >> 7)  & 0x1) << 11;  // imm[11]
+
+                    // sign-extend 13-bit immediate
+                    cpu->instr.imm = (imm << 19) >> 19;
+                    cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
+                    break;
+                }     
+            }
             break;
+        }
         case 0x6F:// J-type
             break;
         case 0x67:
             break;
         case 0x37: // lui
-            cpu->instr.imm = (long)(raw->v >> 12) & 0xFFFFF;
+            cpu->instr.imm = (raw->v >> 12) & 0xFFFFF;
             break;
         case 0x17: // auipc
             break;
@@ -301,6 +322,47 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); NEXT_LINE();
             PUTSI(cpu->instr.imm);NEXT_LINE();
             PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
+            break;
+        }
+        case 0x63: { // B-type Instructions
+            switch (cpu->instr.funct3) {
+                case 0x0: { // beq
+                    if (cpu->regs[cpu->instr.rs1].v == cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+                case 0x1: { // bne
+                    if (cpu->regs[cpu->instr.rs1].v != cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+                case 0x4: { // blt
+                    if ((signed char)cpu->regs[cpu->instr.rs1].v < (signed char)cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+                case 0x5: { //bge
+                    if ((signed char)cpu->regs[cpu->instr.rs1].v >= (signed char)cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+                case 0x6: { // bltu
+                    if (cpu->regs[cpu->instr.rs1].v < cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+                case 0x7: { //bgeu
+                    if (cpu->regs[cpu->instr.rs1].v >= cpu->regs[cpu->instr.rs2].v) {
+                        cpu->pc += cpu->instr.imm;
+                    }
+                    break;
+                }
+            }
             break;
         }
         case 0x37: { // lui
