@@ -312,8 +312,15 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
-        case 0x17: // auipc
-            break;    
-        
+        case 0x17: { // auipc
+            PUT("auipc");
+
+            cpu->regs[cpu->instr.rd].v = cpu->pc + cpu->instr.imm << 12;
+            
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTUI(cpu->pc);NEXT_LINE();
+            PUTSI(cpu->instr.imm);NEXT_LINE();
+            break; 
+        }   
     }
 }
