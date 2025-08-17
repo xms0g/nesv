@@ -1,6 +1,6 @@
 #include "riscv.h"
-#include "neslib.h"
 #include "nesio.h"
+#include "../libs/neslib.h"
 
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned char x;
@@ -103,7 +103,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
 
                     // sign-extend 13-bit immediate
                     cpu->instr.imm = (imm << 19) >> 19;
-                    
+
                     cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
                     break;
                 }     

@@ -2,8 +2,8 @@
 #define NESIO_H
 
 #include <string.h>
-#include "neslib.h"
 #include "types.h"
+#include "../libs/neslib.h"
 
 #define NEXT_CHAR(n) do { x += (n); vram_adr(NTADR_A(x, y)); } while(0)
 

@@ -14,6 +14,9 @@ src/%.s : src/%.c
 
 build/%.o : src/%.s
 	$(CA65) $< -o $@
+
+build/%.o : libs/%.s
+	$(CA65) $< -o $@
 	
 build/$(TARGET) : $(OBJS)
 	$(LD) -C $(CFG) -o $@ $^ $(LDFLAGS) 

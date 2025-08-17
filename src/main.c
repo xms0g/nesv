@@ -1,7 +1,7 @@
 #include <string.h>
-#include "neslib.h"
 #include "config.h"
 #include "riscv.h"
+#include "../libs/neslib.h"
 #include "machineCodes.h"
 
 #pragma bss-name(push, "ZEROPAGE")
