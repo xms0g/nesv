@@ -16,10 +16,7 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     
     cpu->regs[X0].v = 0x0;
     // Set R_SP = 0x80000400
-    cpu->regs[R_SP].b[0] = 0x00;       // lowest byte
-    cpu->regs[R_SP].b[1] = 0x04;
-    cpu->regs[R_SP].b[2] = 0x00;
-    cpu->regs[R_SP].b[3] = 0x80;       // highest byte
+    cpu->regs[R_SP].v = 0x80000400;
     cpu->pc = DRAM_BASE;
 }
 
