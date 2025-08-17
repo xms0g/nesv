@@ -11,7 +11,7 @@ struct RiscVInstr {
     unsigned char rs1;
     unsigned char rs2;
     unsigned char funct7;
-    u32 imm;
+    long imm;
 };
 
 struct RiscV {
