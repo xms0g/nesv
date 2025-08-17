@@ -51,9 +51,10 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             break;
         }
         case 0x13: // I-type Instructions
+        case 0x67: // jalr
         case 0x3: { // Load Instructions
             switch (cpu->instr.funct3) {
-                case 0x0: // addi/lb
+                case 0x0: // addi/lb/jalr
                 case 0x4: // xori/lbu
                 case 0x6: // ori
                 case 0x7: // andi
@@ -62,6 +63,9 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x2: // slti/lw
                 case 0x3: { // sltiu
                     cpu->instr.imm = (raw->v >> 20) & 0xFFF;
+                    
+                    if (cpu->instr.imm & 0x800)
+                        cpu->instr.imm |= 0xFFFFF000;
                     break;
                 }
             }
@@ -74,6 +78,9 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
                 case 0x2: { // sw
                     cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
                     cpu->instr.imm = (((raw->v >> 25) & 0x7F) << 5) | ((raw->v >> 7) & 0x1f);
+
+                    if (cpu->instr.imm & 0x800)
+                        cpu->instr.imm |= 0xFFFFF000;
                     break;
                 }
             }
@@ -96,22 +103,29 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
 
                     // sign-extend 13-bit immediate
                     cpu->instr.imm = (imm << 19) >> 19;
+                    
                     cpu->instr.rs2 = (raw->v >> 20) & 0x1f;
                     break;
                 }     
             }
             break;
         }
-        case 0x6F:// J-type
+        case 0x6F: { // jal
+            long imm = 0;
+
+            imm |= ((raw->v >> 31) & 0x1) << 20;   // imm[20]
+            imm |= ((raw->v >> 21) & 0x3FF) << 1;  // imm[10:1]
+            imm |= ((raw->v >> 20) & 0x1) << 11;   // imm[11]
+            imm |= ((raw->v >> 12) & 0xFF) << 12;  // imm[19:12]
+
+            // sign-extend 21-bit immediate
+            cpu->instr.imm = (imm << 11) >> 11;
             break;
-        case 0x67:
-            break;
+        }
         case 0x37: // lui
-            cpu->instr.imm = (raw->v >> 12) & 0xFFFFF;
-            break;
         case 0x17: // auipc
-            break;
-            
+            cpu->instr.imm = (raw->v >> 12) & 0xFFFFF;
+            break;    
     }
 }
 
@@ -363,6 +377,33 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     break;
                 }
             }
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
+            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
+            PUTUI(cpu->pc);NEXT_LINE();
+            PUTSI(cpu->instr.imm);NEXT_LINE();
+            break;
+        }
+        case 0x6F: { // jal
+            PUT("jal");
+
+            cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
+            cpu->pc = cpu->pc + cpu->instr.imm;
+
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTUI(cpu->pc);NEXT_LINE();
+            PUTSI(cpu->instr.imm);NEXT_LINE();
+            break;
+        }
+        case 0x67: { // jalr
+            PUT("jalr");
+
+            cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
+            cpu->pc = (cpu->regs[cpu->instr.rs1].v + cpu->instr.imm) & ~1u;
+
+            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
+            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
+            PUTUI(cpu->pc);NEXT_LINE();
+            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x37: { // lui

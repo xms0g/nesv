@@ -16,7 +16,7 @@ void main(void) {
 
 	rvInit(&cpu);
 
-	memcpy(&cpu.bus.dram.mem, sb, sizeof(sb));
+	memcpy(&cpu.bus.dram.mem, sh, sizeof(sh));
 	
 	while (1) { 
         instr = rvFetch(&cpu);
