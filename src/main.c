@@ -6,6 +6,7 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 static u32* instr;
+unsigned char hasJump;
 #pragma bss-name(pop)
 static struct RiscV cpu;
 
@@ -16,7 +17,9 @@ void main(void) {
 
 	rvInit(&cpu);
 
-	memcpy(&cpu.bus.dram.mem, sh, sizeof(sh));
+	hasJump = 0;
+
+	memcpy(&cpu.bus.dram.mem, beq, sizeof(beq));
 	
 	while (1) { 
         instr = rvFetch(&cpu);
@@ -25,9 +28,12 @@ void main(void) {
 
         rvDecode(&cpu, instr);
 
-        rvExecute(&cpu);
+        rvExecute(&cpu, &hasJump);
 
-		cpu.pc += 4;
+		if (!hasJump)
+			cpu.pc += 4;
+		
+		hasJump = 0;
         
     }
 	
