@@ -16,3 +16,4 @@ To build and run, you’ll need the following tools:
 - `NES` emulator (e.g., FCEUX)
 
 ## License
+This project is licensed under the BSD 3-Clause License. See the LICENSE file for details.
