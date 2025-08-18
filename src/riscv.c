@@ -432,7 +432,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
     }
 }
 
-void __fastcall__ rvRegisterDump(struct RiscV* cpu) {
+void __fastcall__ rvDumpReg(struct RiscV* cpu) {
     unsigned char i = 0;
 
     for (; i < 32; ++i) {
@@ -440,10 +440,13 @@ void __fastcall__ rvRegisterDump(struct RiscV* cpu) {
             y = 1;
             NEXT_CHAR(15);
         }
-        printReg(i, cpu->regs[i].v); 
+        
+        printXReg(i);
+        print(":");
+        sprint(cpu->regs[i].v);
         NEXT_LINE(x);
     }
-    
+
     NEXT_LINE(x);
     PUT("PC:");uprint(cpu->pc);
 }

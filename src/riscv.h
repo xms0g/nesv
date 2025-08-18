@@ -98,6 +98,6 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw);
 
 void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump);
 
-void __fastcall__ rvRegisterDump(struct RiscV* cpu);
+void __fastcall__ rvDumpReg(struct RiscV* cpu);
 
 #endif
