@@ -1,6 +1,8 @@
 # nesv
 **nesv** is a toy RISC-V emulator that runs entirely on the **Nintendo Entertainment System (NES)**, demonstrates that a modern 32-bit ISA can be emulated on 8-bit retro hardware.
 
+<img src="assets/nesv.png" alt="image" width="700" height="auto">
+
 ## Features
 
 - Emulates the **RISC-V RV32I base instruction set**  
