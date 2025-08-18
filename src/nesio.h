@@ -11,8 +11,8 @@
     NEXT_CHAR(strlen(str) + 1); \
     } while(0)
 
-#define PUTR(r, v) do { \
-    printReg(r, v); \
+#define PUTR(r) do { \
+    printXReg(r); \
     NEXT_CHAR(12); \
     } while(0)
 
@@ -42,6 +42,6 @@ void __fastcall__ sprint(const long val);
 
 void __fastcall__ uprint(const unsigned long val);
 
-void __fastcall__ printReg(const unsigned char reg, const long val);
+void __fastcall__ printXReg(const unsigned char reg);
 
 #endif

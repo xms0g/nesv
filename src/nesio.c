@@ -21,12 +21,9 @@ void __fastcall__ uprint(const unsigned long val) {
     print(buf);
 }
 
-void __fastcall__ printReg(const unsigned char reg, const long val) {
+void __fastcall__ printXReg(const unsigned char reg) {
     utoa(reg, buf, 10);
     
     print("x");
     print(buf);
-    print(":");
-    
-    sprint(val);
 }
