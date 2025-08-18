@@ -12,7 +12,7 @@
 ## Building
 To build and run, you’ll need the following tools:
 
-- [`cc65`](https://cc65.github.io/)  cross development package
+- [`cc65`](https://cc65.github.io/) cross development package
 - `NES` emulator (e.g., FCEUX)
 
 ## License
