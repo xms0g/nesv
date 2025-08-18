@@ -132,206 +132,135 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
             switch (cpu->instr.funct3) {
                 case 0x0: { // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
-                        PUT("add");
-                        
                         cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->regs[cpu->instr.rs2].v;
                     } else if (cpu->instr.funct7 == 0x20) { // sub
-                        PUT("sub");
-                        
                         cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v - cpu->regs[cpu->instr.rs2].v;
                     }
                     break;
                 }
                 case 0x4: { // xor
-                    PUT("xor");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v ^ cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x6: { // or
-                    PUT("or");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v | cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x7: { // and
-                    PUT("and");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v & cpu->regs[cpu->instr.rs2].v;
                     break;
                 }
                 case 0x1: { // sll
-                    PUT("sll");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v << (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     break;
                 }
                 case 0x5: { // srl/sra
                     if (cpu->instr.funct7 == 0x00) { // srl
-                        PUT("srl");
-                        
                         cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v >> (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // sra
-                        PUT("sra");
-
                         cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v >> (cpu->regs[cpu->instr.rs2].v & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slt
-                    PUT("slt");
-                    
                     cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v < (long)cpu->regs[cpu->instr.rs2].v ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltu
-                    PUT("sltu");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v < cpu->regs[cpu->instr.rs2].v ? 1: 0;
                     break;
                 }
             }
-
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v); PUT(" ");
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); PUT(" ");
-            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);
-            NEXT_LINE();
             break;
         }
         case 0x13: { // I-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // addi
-                    PUT("addi");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     break;
                 }
                 case 0x4: { // xori
-                    PUT("xori");
-                    
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v ^ cpu->instr.imm;
                     break;
                 }
                 case 0x6: { // ori
-                    PUT("ori");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v | cpu->instr.imm;
                     break;
                 }
                 case 0x7: {// andi
-                    PUT("andi");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v & cpu->instr.imm;
                     break;
                 }
                 case 0x1: { // slli
-                    PUT("slli");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v << (cpu->instr.imm & 0x1F);
                     break;
                 }
                 case 0x5: { // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
-                        PUT("srli");
-
                         cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v >> (cpu->instr.imm & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // srai
-                        PUT("srai");
-
                         cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v >> (cpu->instr.imm & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slti
-                    PUT("slti");
-
                     cpu->regs[cpu->instr.rd].v = (long)cpu->regs[cpu->instr.rs1].v < (long)cpu->instr.imm ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltiu
-                    PUT("sltiu");
-
                     cpu->regs[cpu->instr.rd].v = cpu->regs[cpu->instr.rs1].v < cpu->instr.imm ? 1: 0;
                     break;
                 }
             }
-            
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x03: { // Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // lb
-                    PUT("lb");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd].v = (long)(signed char)busLoad(&cpu->bus, addr.v, 8)->b[0];
                     break;
                 }
                 case 0x1: { // lh
-                    PUT("lh");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd].v = (long)(signed int)(
+                    cpu->regs[cpu->instr.rd].v = (long)(int)(
                         busLoad(&cpu->bus, addr.v, 16)->b[0] | 
                         (busLoad(&cpu->bus, addr.v, 16)->b[1] << 8));
                     break;
                 }
                 case 0x2: // lw
-                    PUT("lw");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd].v = busLoad(&cpu->bus, addr.v, 32)->v;
                     break;
                 case 0x4: // lbu
-                    PUT("lbu");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd].b[0] = busLoad(&cpu->bus, addr.v, 8)->b[0];
                     break;
                 case 0x5: // lhu
-                    PUT("lhu");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd].v = busLoad(&cpu->bus, addr.v, 16)->b[0] | (busLoad(&cpu->bus, addr.v, 16)->b[1] << 8);
                     break;
             }
-
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x23: { // Store Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // sb
-                    PUT("sb");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     busStore(&cpu->bus, addr.v, 8, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x1: { // sh
-                    PUT("sh");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     busStore(&cpu->bus, addr.v, 16, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x2: { // sw
-                    PUT("sw");
-
                     addr.v = cpu->regs[cpu->instr.rs1].v + cpu->instr.imm;
                     busStore(&cpu->bus, addr.v, 32, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
             }
-
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v); NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
-            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
             break;
         }
         case 0x63: { // B-type Instructions
@@ -351,14 +280,14 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
                     break;
                 }
                 case 0x4: { // blt
-                    if ((signed char)cpu->regs[cpu->instr.rs1].v < (signed char)cpu->regs[cpu->instr.rs2].v) {
+                    if ((long)cpu->regs[cpu->instr.rs1].v < (long)cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
                         *hasJump = 1;
                     }
                     break;
                 }
                 case 0x5: { //bge
-                    if ((signed char)cpu->regs[cpu->instr.rs1].v >= (signed char)cpu->regs[cpu->instr.rs2].v) {
+                    if ((long)cpu->regs[cpu->instr.rs1].v >= (long)cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
                         *hasJump = 1;
                     }
@@ -379,54 +308,26 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
                     break;
                 }
             }
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTR(cpu->instr.rs2, cpu->regs[cpu->instr.rs2].v);NEXT_LINE();
-            PUTUI(cpu->pc);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x6F: { // jal
-            PUT("jal");
-
             cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
             cpu->pc = cpu->pc + cpu->instr.imm;
             *hasJump = 1;
-
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTUI(cpu->pc);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x67: { // jalr
-            PUT("jalr");
-
             cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
             cpu->pc = (cpu->regs[cpu->instr.rs1].v + cpu->instr.imm) & ~1u;
             *hasJump = 1;
-
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTR(cpu->instr.rs1, cpu->regs[cpu->instr.rs1].v);NEXT_LINE();
-            PUTUI(cpu->pc);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x37: { // lui
-            PUT("lui");
-
             cpu->regs[cpu->instr.rd].v = cpu->instr.imm << 12;
-            
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break;
         }
         case 0x17: { // auipc
-            PUT("auipc");
-
             cpu->regs[cpu->instr.rd].v = cpu->pc + cpu->instr.imm << 12;
-            
-            PUTR(cpu->instr.rd, cpu->regs[cpu->instr.rd].v);NEXT_LINE();
-            PUTUI(cpu->pc);NEXT_LINE();
-            PUTSI(cpu->instr.imm);NEXT_LINE();
             break; 
         }   
     }
