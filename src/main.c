@@ -33,9 +33,10 @@ void main(void) {
 		if (!hasJump)
 			cpu.pc += 4;
 		
-		hasJump = 0;
-        
+		hasJump = 0;   
     }
+
+	rvDumpReg(&cpu);
 	
 	ppu_on_all(); // turn on screen1
 	
