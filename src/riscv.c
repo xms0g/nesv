@@ -20,15 +20,15 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->pc = DRAM_BASE;
 }
 
-unsigned long __fastcall__ rvFetch(const struct RiscV* cpu) {
-    return busLoad(&cpu->bus, cpu->pc, 32);
+unsigned long* __fastcall__ rvFetch(const struct RiscV* cpu) {
+    return busLoad(&cpu->bus, &cpu->pc, 32);
 }
 
-void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned char* hasJump) {
-    cpu->instr.opcode = raw & 0x7F;
-    cpu->instr.rd = (raw >> 7) & 0x1f;
-    cpu->instr.funct3 = (raw >> 12) & 0x07;
-    cpu->instr.rs1 = (raw >> 15) & 0x1f;
+void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned char* hasJump) {
+    cpu->instr.opcode = *raw & 0x7F;
+    cpu->instr.rd = (*raw >> 7) & 0x1f;
+    cpu->instr.funct3 = (*raw >> 12) & 0x07;
+    cpu->instr.rs1 = (*raw >> 15) & 0x1f;
    
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
@@ -41,8 +41,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
                 case 0x5: // srl/sra
                 case 0x2: // slt
                 case 0x3: // sltu
-                    cpu->instr.rs2 = (raw >> 20) & 0x1f;
-                    cpu->instr.funct7 = (raw >> 25) & 0x7F;
+                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
+                    cpu->instr.funct7 = (*raw >> 25) & 0x7F;
                     break;
             }
             break;
@@ -58,7 +58,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
                 case 0x5: // srli/srai/lhu
                 case 0x2: // slti/lw
                 case 0x3: { // sltiu
-                    cpu->instr.imm = (raw >> 20) & 0xFFF;
+                    cpu->instr.imm = (*raw >> 20) & 0xFFF;
                     
                     if (cpu->instr.imm & 0x800)
                         cpu->instr.imm |= 0xFFFFF000;
@@ -72,8 +72,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
                 case 0x0: // sb
                 case 0x1: // sh
                 case 0x2: { // sw
-                    cpu->instr.rs2 = (raw >> 20) & 0x1f;
-                    cpu->instr.imm = (((raw >> 25) & 0x7F) << 5) | ((raw >> 7) & 0x1f);
+                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
+                    cpu->instr.imm = (((*raw >> 25) & 0x7F) << 5) | ((*raw >> 7) & 0x1f);
 
                     if (cpu->instr.imm & 0x800)
                         cpu->instr.imm |= 0xFFFFF000;
@@ -94,15 +94,15 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
                 case 0x7: { // bgeu
                     long imm = 0;
 
-                    imm |= ((raw >> 31) & 0x1) << 12;  // imm[12]
-                    imm |= ((raw >> 25) & 0x3F) << 5;  // imm[10:5]
-                    imm |= ((raw >> 8)  & 0xF) << 1;   // imm[4:1]
-                    imm |= ((raw >> 7)  & 0x1) << 11;  // imm[11]
+                    imm |= ((*raw >> 31) & 0x1) << 12;  // imm[12]
+                    imm |= ((*raw >> 25) & 0x3F) << 5;  // imm[10:5]
+                    imm |= ((*raw >> 8)  & 0xF) << 1;   // imm[4:1]
+                    imm |= ((*raw >> 7)  & 0x1) << 11;  // imm[11]
 
                     // sign-extend 13-bit immediate
                     cpu->instr.imm = (imm << 19) >> 19;
 
-                    cpu->instr.rs2 = (raw >> 20) & 0x1f;
+                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
                     break;
                 }     
             }
@@ -112,10 +112,10 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
             long imm = 0;
             *hasJump = 1;
 
-            imm |= ((raw >> 31) & 0x1) << 20;   // imm[20]
-            imm |= ((raw >> 21) & 0x3FF) << 1;  // imm[10:1]
-            imm |= ((raw >> 20) & 0x1) << 11;   // imm[11]
-            imm |= ((raw >> 12) & 0xFF) << 12;  // imm[19:12]
+            imm |= ((*raw >> 31) & 0x1) << 20;   // imm[20]
+            imm |= ((*raw >> 21) & 0x3FF) << 1;  // imm[10:1]
+            imm |= ((*raw >> 20) & 0x1) << 11;   // imm[11]
+            imm |= ((*raw >> 12) & 0xFF) << 12;  // imm[19:12]
 
             // sign-extend 21-bit immediate
             cpu->instr.imm = (imm << 11) >> 11;
@@ -126,7 +126,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
 
             switch (cpu->instr.funct3) {
                 case 0x0: { 
-                    cpu->instr.imm = (raw >> 20) & 0xFFF;
+                    cpu->instr.imm = (*raw >> 20) & 0xFFF;
                     
                     if (cpu->instr.imm & 0x800)
                         cpu->instr.imm |= 0xFFFFF000;
@@ -137,7 +137,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned 
         }
         case 0x37: // lui
         case 0x17: // auipc
-            cpu->instr.imm = (raw >> 12) & 0xFFFFF;
+            cpu->instr.imm = (*raw >> 12) & 0xFFFFF;
             break;    
     }
 }
@@ -234,25 +234,25 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             switch (cpu->instr.funct3) {
                 case 0x0: { // lb
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd] = (long)(signed char)busLoad(&cpu->bus, addr, 8);
+                    cpu->regs[cpu->instr.rd] = (long)(signed char)*busLoad(&cpu->bus, &addr, 8);
                     break;
                 }
                 case 0x1: { // lh
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd] = (long)(int)busLoad(&cpu->bus, addr, 16);
+                    cpu->regs[cpu->instr.rd] = (long)(int)*busLoad(&cpu->bus, &addr, 16);
                     break;
                 }
                 case 0x2: // lw
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd] = busLoad(&cpu->bus, addr, 32);
+                    cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 32);
                     break;
                 case 0x4: // lbu
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd] = busLoad(&cpu->bus, addr, 8);
+                    cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 8);
                     break;
                 case 0x5: // lhu
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    cpu->regs[cpu->instr.rd] = busLoad(&cpu->bus, addr, 16);
+                    cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 16);
                     break;
             }
             break;
@@ -261,17 +261,17 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             switch (cpu->instr.funct3) {
                 case 0x0: { // sb
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    busStore(&cpu->bus, addr, 8, cpu->regs[cpu->instr.rs2]);
+                    busStore(&cpu->bus, &addr, 8, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x1: { // sh
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    busStore(&cpu->bus, addr, 16, cpu->regs[cpu->instr.rs2]);
+                    busStore(&cpu->bus, &addr, 16, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x2: { // sw
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
-                    busStore(&cpu->bus, addr, 32, cpu->regs[cpu->instr.rs2]);
+                    busStore(&cpu->bus, &addr, 32, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
             }

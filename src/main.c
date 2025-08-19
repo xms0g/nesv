@@ -4,7 +4,7 @@
 #include "../libs/neslib.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-static unsigned long instr;
+static unsigned long* instr;
 static unsigned char hasJump;
 #pragma bss-name(pop)
 static struct RiscV cpu;
@@ -38,7 +38,7 @@ void main(void) {
 	while (1) { 
         instr = rvFetch(&cpu);
 
-		if (instr == 0) break;
+		if (*instr == 0) break;
 
         rvDecode(&cpu, instr, &hasJump);
 
