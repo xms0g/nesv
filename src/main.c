@@ -4,10 +4,8 @@
 #include "../libs/neslib.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-
 static unsigned long* instr;
 static unsigned char hasJump;
-
 #pragma bss-name(pop)
 
 static struct RiscV cpu;
