@@ -5,7 +5,7 @@
 unsigned long offset;
 #pragma bss-name(pop)
 
-unsigned long __fastcall__ drmLoad(struct DRAM* dram, unsigned long address, unsigned char size) {
+unsigned long __fastcall__ drmLoad(const struct DRAM* dram, unsigned long address, unsigned char size) {
     if (address >= DRAM_BASE && address < DRAM_BASE + DRAM_SIZE) {
         offset = address - DRAM_BASE;
 

@@ -20,7 +20,7 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->pc = DRAM_BASE;
 }
 
-unsigned long __fastcall__ rvFetch(struct RiscV* cpu) {
+unsigned long __fastcall__ rvFetch(const struct RiscV* cpu) {
     return busLoad(&cpu->bus, cpu->pc, 32);
 }
 
@@ -339,7 +339,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
     }
 }
 
-void __fastcall__ rvDumpReg(struct RiscV* cpu) {
+void __fastcall__ rvDumpReg(const struct RiscV* cpu) {
     unsigned char i = 0;
 
     for (; i < 32; ++i) {

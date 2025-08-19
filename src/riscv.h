@@ -91,12 +91,12 @@ struct RiscV {
 
 void __fastcall__ rvInit(struct RiscV* cpu);
 
-unsigned long __fastcall__ rvFetch(struct RiscV* cpu);
+unsigned long __fastcall__ rvFetch(const struct RiscV* cpu);
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long raw, unsigned char* hasJump);
 
 void __fastcall__ rvExecute(struct RiscV* cpu);
 
-void __fastcall__ rvDumpReg(struct RiscV* cpu);
+void __fastcall__ rvDumpReg(const struct RiscV* cpu);
 
 #endif
