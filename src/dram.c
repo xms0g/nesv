@@ -2,7 +2,7 @@
 #include <string.h>
 
 #pragma bss-name(push, "ZEROPAGE")
-unsigned long offset;
+static unsigned long offset;
 #pragma bss-name(pop)
 
 unsigned long __fastcall__ drmLoad(const struct DRAM* dram, unsigned long address, unsigned char size) {

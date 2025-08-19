@@ -5,7 +5,7 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 static unsigned long instr;
-unsigned char hasJump;
+static unsigned char hasJump;
 #pragma bss-name(pop)
 static struct RiscV cpu;
 
