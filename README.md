@@ -3,13 +3,7 @@
 
 <img src="assets/nesv.png" alt="image" width="700" height="auto">
 
-## Features
-
-- Emulates the **RISC-V RV32I base instruction set**  
-- `Branch`, `load/store`, and `arithmetic/logical` instructions implemented  
-- Runs on a stock NES / emulator with a standard `.nes` ROM  
-- Debug output shown on NES screen (registers and PC dumps)  
-- Simple test programs in RISC-V machine code can be loaded and executed  
+Only `RV32I` base instruction set,`branch`, `load/store`, and `arithmetic/logical` (no compressed, no floating point, no atomics). Performance is limited by the 6502 CPU speed (1.79 MHz). Instruction decoder is minimal, just enough to run demos. No support for interrupts, traps, or a full RISC-V environment.
 
 ## Building
 To build and run, you’ll need the following tools:
