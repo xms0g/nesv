@@ -94,9 +94,9 @@ void __fastcall__ rvInit(struct RiscV* cpu);
 
 u32* __fastcall__ rvFetch(struct RiscV* cpu);
 
-void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw);
+void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw, unsigned char* hasJump);
 
-void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump);
+void __fastcall__ rvExecute(struct RiscV* cpu);
 
 void __fastcall__ rvDumpReg(struct RiscV* cpu);
 

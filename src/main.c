@@ -40,9 +40,9 @@ void main(void) {
 
 		if (instr->v == 0) break;
 
-        rvDecode(&cpu, instr);
+        rvDecode(&cpu, instr, &hasJump);
 
-        rvExecute(&cpu, &hasJump);
+        rvExecute(&cpu);
 
 		if (!hasJump)
 			cpu.pc += 4;

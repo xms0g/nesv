@@ -24,7 +24,7 @@ u32* __fastcall__ rvFetch(struct RiscV* cpu) {
     return busLoad(&cpu->bus, cpu->pc, 32);
 }
 
-void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
+void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw, unsigned char* hasJump) {
     cpu->instr.opcode = raw->v & 0x7F;
     cpu->instr.rd = (raw->v >> 7) & 0x1f;
     cpu->instr.funct3 = (raw->v >> 12) & 0x07;
@@ -48,10 +48,9 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             break;
         }
         case 0x13: // I-type Instructions
-        case 0x67: // jalr
         case 0x3: { // Load Instructions
             switch (cpu->instr.funct3) {
-                case 0x0: // addi/lb/jalr
+                case 0x0: // addi/lb
                 case 0x4: // xori/lbu
                 case 0x6: // ori
                 case 0x7: // andi
@@ -84,6 +83,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             break;
         }
         case 0x63: { // B-type
+            *hasJump = 1;
+            
             switch (cpu->instr.funct3) {
                 case 0x0: // beq
                 case 0x1: // bne
@@ -109,6 +110,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
         }
         case 0x6F: { // jal
             long imm = 0;
+            *hasJump = 1;
 
             imm |= ((raw->v >> 31) & 0x1) << 20;   // imm[20]
             imm |= ((raw->v >> 21) & 0x3FF) << 1;  // imm[10:1]
@@ -119,6 +121,20 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
             cpu->instr.imm = (imm << 11) >> 11;
             break;
         }
+        case 0x67: { // jalr
+            *hasJump = 1;
+
+            switch (cpu->instr.funct3) {
+                case 0x0: { 
+                    cpu->instr.imm = (raw->v >> 20) & 0xFFF;
+                    
+                    if (cpu->instr.imm & 0x800)
+                        cpu->instr.imm |= 0xFFFFF000;
+                    break;
+                }
+            }
+            break;
+        }
         case 0x37: // lui
         case 0x17: // auipc
             cpu->instr.imm = (raw->v >> 12) & 0xFFFFF;
@@ -126,7 +142,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const u32* raw) {
     }
 }
 
-void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
+void __fastcall__ rvExecute(struct RiscV* cpu) {
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
             switch (cpu->instr.funct3) {
@@ -268,42 +284,36 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
                 case 0x0: { // beq
                     if (cpu->regs[cpu->instr.rs1].v == cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
                 case 0x1: { // bne
                     if (cpu->regs[cpu->instr.rs1].v != cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
                 case 0x4: { // blt
                     if ((long)cpu->regs[cpu->instr.rs1].v < (long)cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
                 case 0x5: { //bge
                     if ((long)cpu->regs[cpu->instr.rs1].v >= (long)cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
                 case 0x6: { // bltu
                     if (cpu->regs[cpu->instr.rs1].v < cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
                 case 0x7: { //bgeu
                     if (cpu->regs[cpu->instr.rs1].v >= cpu->regs[cpu->instr.rs2].v) {
                         cpu->pc += cpu->instr.imm;
-                        *hasJump = 1;
                     }
                     break;
                 }
@@ -313,13 +323,11 @@ void __fastcall__ rvExecute(struct RiscV* cpu, unsigned char* hasJump) {
         case 0x6F: { // jal
             cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
             cpu->pc = cpu->pc + cpu->instr.imm;
-            *hasJump = 1;
             break;
         }
         case 0x67: { // jalr
             cpu->regs[cpu->instr.rd].v = cpu->pc + 4;
             cpu->pc = (cpu->regs[cpu->instr.rs1].v + cpu->instr.imm) & ~1u;
-            *hasJump = 1;
             break;
         }
         case 0x37: { // lui
