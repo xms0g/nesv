@@ -3,14 +3,31 @@
 
 <img src="assets/nesv.png" alt="image" width="700" height="auto">
 
+## why
+The fun idea of running a modern 32-bit ISA on an 8-bit 80s console.
+
+It’s a mash-up of computer history: late-70s 6502 meets modern 2010s RISC-V.
+
+Playing with RISC-V’s 32-bit address space while living inside the NES’s 2 KB of RAM is an absurd but educational exercise.
+
+Working with cc65 feels very different from modern GCC/LLVM — a nice throwback that forces you to think about codegen.
+
+It’s completely impractical, but that’s exactly what makes it fun: seeing RISC-V assembly actually run on NES hardware.
+
 ## Features
-- Only supports **RV32I**; `branch`, `load/store`, and `arithmetic/logical` instructions implemented (no compressed, no floating point, no atomics). 
+- Supports core `RV32I` instructions: `arithmetic`, `logical`, `loads/stores`, and `branches`.
 
-- Runs on a stock NES / emulator with a standard `.nes` ROM.
+- **Instruction decoder:** decodes RISC-V machine code into opcodes and immediates.
 
-- Debug output shown on NES screen (registers, PC dumps) 
+- Sign/zero extension logic for lb, lh, lw, lbu, lhu.
 
-- No support for interrupts, traps, or a full RISC-V environment.
+- Branch/jump execution with PC-relative offsets.
+
+- Simple bus abstraction for memory access (NES RAM mapped as RISC-V memory).
+
+- Debug text renderer: NES screen shows registers, PC, and current instruction.
+
+- Runs test RISC-V binaries embedded in ROM.
 
 ## Building
 To build and run, you’ll need the following tools:
