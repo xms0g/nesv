@@ -1,4 +1,5 @@
 #include "riscv.h"
+#include <string.h>
 #include "nesio.h"
 #include "../libs/neslib.h"
 
