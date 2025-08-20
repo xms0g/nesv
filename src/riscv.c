@@ -242,18 +242,21 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
                     cpu->regs[cpu->instr.rd] = (long)(int)*busLoad(&cpu->bus, &addr, 16);
                     break;
                 }
-                case 0x2: // lw
+                case 0x2: { // lw
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 32);
                     break;
-                case 0x4: // lbu
+                }   
+                case 0x4: { // lbu
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 8);
                     break;
-                case 0x5: // lhu
+                } 
+                case 0x5: { // lhu
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 16);
                     break;
+                }
             }
             break;
         }
