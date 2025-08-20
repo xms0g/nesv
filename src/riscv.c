@@ -16,7 +16,7 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     
     cpu->regs[X0] = 0x0;
     // Set R_SP = 0x80000400
-    cpu->regs[R_SP] = 0x80000400;
+    cpu->regs[R_SP] = DRAM_BASE + DRAM_SIZE;
     cpu->pc = DRAM_BASE;
 }
 
