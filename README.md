@@ -17,15 +17,9 @@ It’s completely impractical, but that’s exactly what makes it fun: seeing RI
 ## Features
 - Supports core `RV32I` instructions: `arithmetic`, `logical`, `loads/stores`, and `branches`.
 
-- **Instruction decoder:** decodes RISC-V machine code into opcodes and immediates.
-
-- Sign/zero extension logic for lb, lh, lw, lbu, lhu.
-
-- Branch/jump execution with PC-relative offsets.
-
 - Simple bus abstraction for memory access (NES RAM mapped as RISC-V memory).
 
-- Debug text renderer: NES screen shows registers, PC, and current instruction.
+- Debug text renderer: NES screen shows registers, PC, and instructions.
 
 - Runs test RISC-V binaries embedded in ROM.
 
