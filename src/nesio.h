@@ -5,7 +5,7 @@
 
 #define NEXT_CHAR(n) do { x += (n); vram_adr(NTADR_A(x, y)); } while(0)
 #define NEXT_LINE(n) do { x = n; ++y; vram_adr(NTADR_A(x, y)); } while(0)
-#define GOTOXY(n0, n1) do { x = n0; y = n1; vram_adr(NTADR_A(x, y)); } while(0)
+#define SETXY(_x, _y) do { x = _x; y = _y; vram_adr(NTADR_A(x, y)); } while(0)
 
 #define PUT(str) do { \
     print(str); \

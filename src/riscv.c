@@ -10,7 +10,7 @@ static unsigned long addr;
 #pragma bss-name(pop)
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
-    GOTOXY(1, 1);
+    SETXY(1, 1);
     
     memset(cpu->regs, 0, sizeof(unsigned long) * 32);
     
@@ -143,7 +143,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned
 }
 
 void __fastcall__ rvExecute(struct RiscV* cpu) {
-    GOTOXY(1, y);
+    SETXY(1, y);
 
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
@@ -419,7 +419,7 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
 
 void __fastcall__ rvDumpReg(const struct RiscV* cpu) {
     unsigned char i = 0, currY = y;
-    GOTOXY(1, currY + 2);
+    SETXY(1, currY + 2);
 
     for (; i < 32; ++i) {
         if (y > 27) {
