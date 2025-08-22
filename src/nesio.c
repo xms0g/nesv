@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #pragma bss-name(push, "ZEROPAGE")
-static char buf[12];
+char buf[12];
 #pragma bss-name(pop)
 
 void __fastcall__ print(const unsigned char* str) {

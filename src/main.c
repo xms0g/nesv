@@ -4,13 +4,13 @@
 #include "../libs/neslib.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-static unsigned long* instr;
-static unsigned char hasJump;
+unsigned long* instr;
+unsigned char hasJump;
 #pragma bss-name(pop)
 
-static struct RiscV cpu;
+struct RiscV cpu;
 
-static const unsigned char code[] = {
+const unsigned char code[] = {
 	// addi sp, sp, -8
     0x13, 0x01, 0x81, 0xff,
     // li	t1, -500

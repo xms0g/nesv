@@ -4,9 +4,9 @@
 #include "../libs/neslib.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-static unsigned char x;
-static unsigned char y;
-static unsigned long addr;
+unsigned char x;
+unsigned char y;
+unsigned long addr;
 #pragma bss-name(pop)
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
