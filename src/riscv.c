@@ -375,20 +375,20 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             break;
         }
         case 0x6F: { // jal
+            PUT("jal");
             cpu->regs[cpu->instr.rd] = cpu->pc + 4;
             cpu->pc = cpu->pc + cpu->instr.imm;
             
-            PUT("jal");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
             break;
         }
         case 0x67: { // jalr
+            PUT("jalr");
             cpu->regs[cpu->instr.rd] = cpu->pc + 4;
             cpu->pc = (cpu->regs[cpu->instr.rs1] + cpu->instr.imm) & ~1u;
 
-            PUT("jalr");
             PUTR(cpu->instr.rd);
             PUTR(cpu->instr.rs1);
             PUTSI(cpu->instr.imm);
@@ -396,9 +396,9 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             break;
         }
         case 0x37: { // lui
+            PUT("lui");
             cpu->regs[cpu->instr.rd] = cpu->instr.imm << 12;
             
-            PUT("lui");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
@@ -406,9 +406,9 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             break;
         }
         case 0x17: { // auipc
+            PUT("auipc");
             cpu->regs[cpu->instr.rd] = cpu->pc + cpu->instr.imm << 12;
             
-            PUT("auipc");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
