@@ -10,8 +10,6 @@ It’s a mash-up of computer history: late-70s 6502 meets modern 2010s RISC-V.
 
 Playing with RISC-V’s 32-bit address space while living inside the NES’s 2 KB of RAM is an absurd but educational exercise.
 
-Working with cc65 feels very different from modern GCC/LLVM — a nice throwback that forces you to think about codegen.
-
 It’s completely impractical, but that’s exactly what makes it fun: seeing RISC-V assembly actually run on NES hardware.
 
 ## Features
