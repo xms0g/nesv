@@ -6,11 +6,15 @@
 #pragma bss-name(push, "ZEROPAGE")
 unsigned char x;
 unsigned char y;
+unsigned char hasJump;
 unsigned long addr;
+unsigned long* instr;
 #pragma bss-name(pop)
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     SETXY(1, 1);
+    
+    hasJump = 0;
     
     memset(cpu->regs, 0, sizeof(unsigned long) * 32);
     
@@ -20,11 +24,28 @@ void __fastcall__ rvInit(struct RiscV* cpu) {
     cpu->pc = DRAM_BASE;
 }
 
+void __fastcall__ rvRun(struct RiscV* cpu) {
+    while (1) { 
+        instr = rvFetch(cpu);
+
+		if (*instr == 0) break;
+
+        rvDecode(cpu, instr);
+
+        rvExecute(cpu);
+
+		if (!hasJump)
+			cpu->pc += 4;
+		
+		hasJump = 0;   
+    }
+}
+
 unsigned long* __fastcall__ rvFetch(const struct RiscV* cpu) {
     return busLoad(&cpu->bus, &cpu->pc, 32);
 }
 
-void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned char* hasJump) {
+void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
     cpu->instr.opcode = *raw & 0x7F;
     cpu->instr.rd = (*raw >> 7) & 0x1f;
     cpu->instr.funct3 = (*raw >> 12) & 0x07;
@@ -83,7 +104,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned
             break;
         }
         case 0x63: { // B-type
-            *hasJump = 1;
+            hasJump = 1;
             
             switch (cpu->instr.funct3) {
                 case 0x0: // beq
@@ -110,7 +131,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned
         }
         case 0x6F: { // jal
             long imm = 0;
-            *hasJump = 1;
+            hasJump = 1;
 
             imm |= ((*raw >> 31) & 0x1) << 20;   // imm[20]
             imm |= ((*raw >> 21) & 0x3FF) << 1;  // imm[10:1]
@@ -122,7 +143,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw, unsigned
             break;
         }
         case 0x67: { // jalr
-            *hasJump = 1;
+            hasJump = 1;
 
             switch (cpu->instr.funct3) {
                 case 0x0: { 

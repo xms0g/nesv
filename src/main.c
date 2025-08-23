@@ -3,13 +3,6 @@
 #include "riscv.h"
 #include "../libs/neslib.h"
 
-#pragma bss-name(push, "ZEROPAGE")
-unsigned long* instr;
-unsigned char hasJump;
-#pragma bss-name(pop)
-
-struct RiscV cpu;
-
 const unsigned char code[] = {
 	// addi sp, sp, -8
     0x13, 0x01, 0x81, 0xff,
@@ -25,6 +18,8 @@ const unsigned char code[] = {
     0x13, 0x01, 0x81,0x00,
 };
 
+static struct RiscV cpu;
+
 void main(void) {
 	ppu_off(); // screen off
 
@@ -32,24 +27,9 @@ void main(void) {
 
 	rvInit(&cpu);
 
-	hasJump = 0;
-
 	memcpy(&cpu.bus.dram.mem, code, sizeof(code));
 	
-	while (1) { 
-        instr = rvFetch(&cpu);
-
-		if (*instr == 0) break;
-
-        rvDecode(&cpu, instr, &hasJump);
-
-        rvExecute(&cpu);
-
-		if (!hasJump)
-			cpu.pc += 4;
-		
-		hasJump = 0;   
-    }
+	rvRun(&cpu);
 
 	rvDumpReg(&cpu);
 	
