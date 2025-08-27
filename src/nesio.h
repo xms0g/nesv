@@ -13,7 +13,8 @@
     } while(0)
 
 #define PUTR(r) do { \
-    printXReg(r); \
+    print("x"); \
+    uprint(r); \
     NEXT_CHAR(4); \
     } while(0)
 
@@ -23,20 +24,22 @@
     } while(0)
 
 #define PUTUI(v) do { \
-    uprint(v); \
+    ulprint(v); \
     NEXT_CHAR(4); \
     } while(0)
 
 #define PUTLS(imm, rs1) do { \
     sprint(imm); \
-    print("(");printXReg(rs1);print(")"); \
+    print("(");print("x");uprint(rs1);print(")"); \
     } while(0)
 
 void __fastcall__ print(const unsigned char* str);
 
 void __fastcall__ sprint(const long val);
 
-void __fastcall__ uprint(const unsigned long val);
+void __fastcall__ uprint(const unsigned char val);
+
+void __fastcall__ ulprint(const unsigned long val);
 
 void __fastcall__ xprint(const unsigned long val);
 

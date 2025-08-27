@@ -448,7 +448,8 @@ void __fastcall__ rvDumpReg(const struct RiscV* cpu) {
             NEXT_CHAR(15);
         }
         
-        printXReg(i);
+        print("x");
+        uprint(i);
         print(":");
         if (i == 2) {
             print("0x");

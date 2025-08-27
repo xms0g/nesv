@@ -16,19 +16,17 @@ void __fastcall__ sprint(const long val) {
     print(buf);
 }
 
-void __fastcall__ uprint(const unsigned long val) {
+void __fastcall__ uprint(const unsigned char val) {
+    utoa(val, buf, 10);
+    print(buf);
+}
+
+void __fastcall__ ulprint(const unsigned long val) {
     ultoa(val, buf, 10);
     print(buf);
 }
 
 void __fastcall__ xprint(const unsigned long val) {
     ultoa(val, buf, 16);
-    print(buf);
-}
-
-void __fastcall__ printXReg(const unsigned char reg) {
-    utoa(reg, buf, 10);
-    
-    print("x");
     print(buf);
 }
