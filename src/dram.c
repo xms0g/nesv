@@ -15,13 +15,14 @@ unsigned long* __fastcall__ drmLoad(const struct DRAM* dram, const unsigned long
                 data = *offset;
                 break;
             case 16:
-                data = (unsigned long)*offset++ | (unsigned long)*offset << 8;
+                data = (unsigned long)*offset++;
+                data |= (unsigned long)*offset << 8;
                 break;
             case 32:
-                data = (unsigned long)*offset++ | 
-                        (unsigned long)*offset++ << 8 |
-                        (unsigned long)*offset++ << 16 | 
-                        (unsigned long)*offset << 24;
+                data = (unsigned long)*offset++;
+                data |= (unsigned long)*offset++ << 8;
+                data |= (unsigned long)*offset++ << 16;
+                data |= (unsigned long)*offset << 24;
                 break;
         }
         return &data;
