@@ -35,14 +35,14 @@
 
 void __fastcall__ print(const unsigned char* str);
 
-void __fastcall__ sprint(const long val);
+void __fastcall__ sprint(long val);
 
-void __fastcall__ uprint(const unsigned char val);
+void __fastcall__ uprint(unsigned char val);
 
-void __fastcall__ ulprint(const unsigned long val);
+void __fastcall__ ulprint(unsigned long val);
 
-void __fastcall__ xprint(const unsigned long val);
+void __fastcall__ xprint(unsigned long val);
 
-void __fastcall__ printXReg(const unsigned char reg);
+void __fastcall__ printXReg(unsigned char reg);
 
 #endif

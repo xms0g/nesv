@@ -11,22 +11,22 @@ void __fastcall__ print(const unsigned char* str) {
     }
 }
 
-void __fastcall__ sprint(const long val) {
+void __fastcall__ sprint(long val) {
     ltoa(val, buf, 10);
     print(buf);
 }
 
-void __fastcall__ uprint(const unsigned char val) {
+void __fastcall__ uprint(unsigned char val) {
     utoa(val, buf, 10);
     print(buf);
 }
 
-void __fastcall__ ulprint(const unsigned long val) {
+void __fastcall__ ulprint(unsigned long val) {
     ultoa(val, buf, 10);
     print(buf);
 }
 
-void __fastcall__ xprint(const unsigned long val) {
+void __fastcall__ xprint(unsigned long val) {
     ultoa(val, buf, 16);
     print(buf);
 }
