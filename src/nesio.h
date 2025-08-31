@@ -43,6 +43,4 @@ void __fastcall__ ulprint(unsigned long val);
 
 void __fastcall__ xprint(unsigned long val);
 
-void __fastcall__ printXReg(unsigned char reg);
-
 #endif

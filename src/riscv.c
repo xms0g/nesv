@@ -94,7 +94,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x1: // sh
                 case 0x2: { // sw
                     cpu->instr.rs2 = (*raw >> 20) & 0x1f;
-                    cpu->instr.imm = (((*raw >> 25) & 0x7F) << 5) | ((*raw >> 7) & 0x1f);
+                    cpu->instr.imm = (((*raw >> 25) & 0x7F) << 5);
+                    cpu->instr.imm |= ((*raw >> 7) & 0x1f);
 
                     if (cpu->instr.imm & 0x800)
                         cpu->instr.imm |= 0xFFFFF000;
