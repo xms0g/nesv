@@ -3,7 +3,7 @@
 
 <img src="assets/nesv.png" alt="image" width="700" height="auto">
 
-## why
+## why?
 The fun idea of running a modern 32-bit ISA on an 8-bit 80s console.
 
 Playing with RISC-V’s 32-bit address space while living inside the NES’s 2 KB of RAM is an absurd but educational exercise.
