@@ -165,287 +165,379 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
 }
 
 void __fastcall__ rvExecute(struct RiscV* cpu) {
+#ifdef DEBUG
     SETXY(1, y);
-
+#endif
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
+                        #ifdef DEBUG
                         PUT("add");
+                        #endif
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] + cpu->regs[cpu->instr.rs2];
                     } else if (cpu->instr.funct7 == 0x20) { // sub
+                        #ifdef DEBUG
                         PUT("sub");
+                        #endif
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] - cpu->regs[cpu->instr.rs2];
                     }
                     break;
                 }
                 case 0x4: { // xor
+                    #ifdef DEBUG
                     PUT("xor");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] ^ cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x6: { // or
+                    #ifdef DEBUG
                     PUT("or");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] | cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x7: { // and
+                    #ifdef DEBUG
                     PUT("and");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] & cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x1: { // sll
+                    #ifdef DEBUG
                     PUT("sll");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] << (cpu->regs[cpu->instr.rs2] & 0x1F);
                     break;
                 }
                 case 0x5: { // srl/sra
                     if (cpu->instr.funct7 == 0x00) { // srl
+                        #ifdef DEBUG
                         PUT("srl");
+                        #endif
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] >> (cpu->regs[cpu->instr.rs2] & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // sra
+                        #ifdef DEBUG
                         PUT("sra");
+                        #endif
                         cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] >> (cpu->regs[cpu->instr.rs2] & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slt
+                    #ifdef DEBUG
                     PUT("slt");
+                    #endif
                     cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] < (long)cpu->regs[cpu->instr.rs2] ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltu
+                    #ifdef DEBUG
                     PUT("sltu");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] < cpu->regs[cpu->instr.rs2] ? 1: 0;
                     break;
                 }
             }
+            #ifdef DEBUG
             PUTR(cpu->instr.rd);
             PUTR(cpu->instr.rs1);
             PUTR(cpu->instr.rs2);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x13: { // I-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // addi
+                    #ifdef DEBUG
                     PUT("addi");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     break;
                 }
                 case 0x4: { // xori
+                    #ifdef DEBUG
                     PUT("xori");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] ^ cpu->instr.imm;
                     break;
                 }
                 case 0x6: { // ori
+                    #ifdef DEBUG
                     PUT("ori");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] | cpu->instr.imm;
                     break;
                 }
                 case 0x7: {// andi
+                    #ifdef DEBUG
                     PUT("andi");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] & cpu->instr.imm;
                     break;
                 }
                 case 0x1: { // slli
+                    #ifdef DEBUG
                     PUT("slli");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] << (cpu->instr.imm & 0x1F);
                     break;
                 }
                 case 0x5: { // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
+                        #ifdef DEBUG
                         PUT("srli");
+                        #endif
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] >> (cpu->instr.imm & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // srai
+                        #ifdef DEBUG
                         PUT("srai");
+                        #endif
                         cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] >> (cpu->instr.imm & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slti
+                    #ifdef DEBUG
                     PUT("slti");
+                    #endif
                     cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] < (long)cpu->instr.imm ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltiu
+                    #ifdef DEBUG
                     PUT("sltiu");
+                    #endif
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] < cpu->instr.imm ? 1: 0;
                     break;
                 }
             }
+            #ifdef DEBUG
             PUTR(cpu->instr.rd);
             PUTR(cpu->instr.rs1);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x03: { // Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // lb
+                    #ifdef DEBUG
                     PUT("lb");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)(signed char)*busLoad(&cpu->bus, &addr, 8);
                     break;
                 }
                 case 0x1: { // lh
+                    #ifdef DEBUG
                     PUT("lh");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)(int)*busLoad(&cpu->bus, &addr, 16);
                     break;
                 }
                 case 0x2: { // lw
+                    #ifdef DEBUG
                     PUT("lw");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)*busLoad(&cpu->bus, &addr, 32);
                     break;
                 }   
                 case 0x4: { // lbu
+                    #ifdef DEBUG
                     PUT("lbu");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 8);
                     break;
                 } 
                 case 0x5: { // lhu
+                    #ifdef DEBUG
                     PUT("lhu");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 16);
                     break;
                 }
             }
+            #ifdef DEBUG
             PUTR(cpu->instr.rd);
             PUTLS(cpu->instr.imm, cpu->instr.rs1);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x23: { // Store Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // sb
+                    #ifdef DEBUG
                     PUT("sb");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 8, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x1: { // sh
+                    #ifdef DEBUG
                     PUT("sh");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 16, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x2: { // sw
+                    #ifdef DEBUG
                     PUT("sw");
+                    #endif
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 32, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
             }
+            #ifdef DEBUG
             PUTR(cpu->instr.rs2);
             PUTLS(cpu->instr.imm, cpu->instr.rs1);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x63: { // B-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // beq
+                    #ifdef DEBUG
                     PUT("beq");
+                    #endif
                     if (cpu->regs[cpu->instr.rs1] == cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x1: { // bne
+                    #ifdef DEBUG
                     PUT("bne");
+                    #endif
                     if (cpu->regs[cpu->instr.rs1] != cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x4: { // blt
+                    #ifdef DEBUG
                     PUT("blt");
+                    #endif
                     if ((long)cpu->regs[cpu->instr.rs1] < (long)cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x5: { //bge
+                    #ifdef DEBUG
                     PUT("bge");
+                    #endif
                     if ((long)cpu->regs[cpu->instr.rs1] >= (long)cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x6: { // bltu
+                    #ifdef DEBUG
                     PUT("bltu");
+                    #endif
                     if (cpu->regs[cpu->instr.rs1] < cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x7: { //bgeu
+                    #ifdef DEBUG
                     PUT("bgeu");
+                    #endif
                     if (cpu->regs[cpu->instr.rs1] >= cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
             }
+            #ifdef DEBUG
             PUTR(cpu->instr.rs1);
             PUTR(cpu->instr.rs2);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x6F: { // jal
-            PUT("jal");
             cpu->regs[cpu->instr.rd] = cpu->pc + 4;
             cpu->pc = cpu->pc + cpu->instr.imm;
             
+            #ifdef DEBUG
+            PUT("jal");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x67: { // jalr
-            PUT("jalr");
             cpu->regs[cpu->instr.rd] = cpu->pc + 4;
             cpu->pc = (cpu->regs[cpu->instr.rs1] + cpu->instr.imm) & ~1u;
 
+            #ifdef DEBUG
+            PUT("jalr");
             PUTR(cpu->instr.rd);
             PUTR(cpu->instr.rs1);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
+            #endif
             break;
         }
         case 0x37: { // lui
-            PUT("lui");
             cpu->regs[cpu->instr.rd] = cpu->instr.imm << 12;
             
+            #ifdef DEBUG
+            PUT("lui");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
-            
+            #endif
             break;
         }
         case 0x17: { // auipc
-            PUT("auipc");
             cpu->regs[cpu->instr.rd] = cpu->pc + cpu->instr.imm << 12;
             
+            #ifdef DEBUG
+            PUT("auipc");
             PUTR(cpu->instr.rd);
             PUTSI(cpu->instr.imm);
             NEXT_LINE(x);
+            #endif
             break; 
         }   
     }
 }
 
 void __fastcall__ rvDumpReg(const struct RiscV* cpu) {
-    unsigned char i = 0, currY = y;
-    SETXY(1, currY + 2);
+    static unsigned char i = 0;
+    unsigned char currenty = y;
+
+#ifdef DEBUG
+    SETXY(1, currenty + 2);
+#endif
 
     for (; i < 32; ++i) {
         if (y > 27) {
-            y = currY + 2;
+#ifdef DEBUG
+            y = currenty + 2;
+#else
+            y = currenty;
+#endif
             NEXT_CHAR(15);
         }
         

@@ -7,6 +7,10 @@ LD=ld65
 CFLAGS=-Oirs --add-source
 LDFLAGS=nes.lib -Ln build/labels.txt
 
+ifeq ($(DEBUG),1)
+	CFLAGS += -DDEBUG
+endif
+
 all: build/$(TARGET)
 
 src/%.s : src/%.c
