@@ -3,6 +3,19 @@
 #include "nesio.h"
 #include "../libs/neslib.h"
 
+#define OPC(raw) (*(raw) & 0x7F)
+#define RD(raw) ((*(raw) >> 7) & 0x1F)
+#define FUNCT3(raw) ((*(raw) >> 12) & 0x07)
+#define RS1(raw) ((*(raw) >> 15) & 0x1F)
+#define RS2(raw) ((*(raw) >> 20) & 0x1F)
+#define FUNCT7(raw) ((*(raw) >> 25) & 0x7F)
+#define IMM_I(raw) (((*(raw) >> 20) & 0xFFF))
+#define IMM_S(raw) (((( *(raw) >> 25) & 0x7F) << 5) | (((*(raw) >> 7) & 0x1F)))
+#define IMM_U(raw) ((*raw >> 12) & 0xFFFFF)
+#define SIGN_EXT_12(imm) ((long)((imm) << 20) >> 20)
+#define SIGN_EXT_13(imm) ((long)((imm) << 19) >> 19)
+#define SIGN_EXT_21(imm) ((long)((imm) << 11) >> 11)
+
 #pragma bss-name(push, "ZEROPAGE")
 unsigned char x;
 unsigned char y;
@@ -46,10 +59,10 @@ unsigned long* __fastcall__ rvFetch(const struct RiscV* cpu) {
 }
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
-    cpu->instr.opcode = *raw & 0x7F;
-    cpu->instr.rd = (*raw >> 7) & 0x1f;
-    cpu->instr.funct3 = (*raw >> 12) & 0x07;
-    cpu->instr.rs1 = (*raw >> 15) & 0x1f;
+    cpu->instr.opcode = OPC(raw);
+    cpu->instr.rd = RD(raw);
+    cpu->instr.funct3 = FUNCT3(raw);
+    cpu->instr.rs1 = RS1(raw);
    
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
@@ -62,8 +75,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x5: // srl/sra
                 case 0x2: // slt
                 case 0x3: // sltu
-                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
-                    cpu->instr.funct7 = (*raw >> 25) & 0x7F;
+                    cpu->instr.rs2 = RS2(raw);
+                    cpu->instr.funct7 = FUNCT7(raw);
                     break;
             }
             break;
@@ -79,10 +92,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x5: // srli/srai/lhu
                 case 0x2: // slti/lw
                 case 0x3: { // sltiu
-                    cpu->instr.imm = (*raw >> 20) & 0xFFF;
-                    
-                    if (cpu->instr.imm & 0x800)
-                        cpu->instr.imm |= 0xFFFFF000;
+                    cpu->instr.imm = IMM_I(raw);
+                    cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
             }
@@ -93,12 +104,9 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x0: // sb
                 case 0x1: // sh
                 case 0x2: { // sw
-                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
-                    cpu->instr.imm = (((*raw >> 25) & 0x7F) << 5);
-                    cpu->instr.imm |= ((*raw >> 7) & 0x1f);
-
-                    if (cpu->instr.imm & 0x800)
-                        cpu->instr.imm |= 0xFFFFF000;
+                    cpu->instr.rs2 = RS2(raw);
+                    cpu->instr.imm = IMM_S(raw);
+                    cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
             }
@@ -115,16 +123,15 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x6: // bltu
                 case 0x7: { // bgeu
                     long imm = 0;
-
+                    cpu->instr.rs2 = RS2(raw);
+                    
                     imm |= ((*raw >> 31) & 0x1) << 12;  // imm[12]
                     imm |= ((*raw >> 25) & 0x3F) << 5;  // imm[10:5]
                     imm |= ((*raw >> 8)  & 0xF) << 1;   // imm[4:1]
                     imm |= ((*raw >> 7)  & 0x1) << 11;  // imm[11]
 
                     // sign-extend 13-bit immediate
-                    cpu->instr.imm = (imm << 19) >> 19;
-
-                    cpu->instr.rs2 = (*raw >> 20) & 0x1f;
+                    cpu->instr.imm = SIGN_EXT_13(imm);
                     break;
                 }     
             }
@@ -140,7 +147,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
             imm |= ((*raw >> 12) & 0xFF) << 12;  // imm[19:12]
 
             // sign-extend 21-bit immediate
-            cpu->instr.imm = (imm << 11) >> 11;
+            cpu->instr.imm = SIGN_EXT_21(imm);
             break;
         }
         case 0x67: { // jalr
@@ -148,10 +155,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
 
             switch (cpu->instr.funct3) {
                 case 0x0: { 
-                    cpu->instr.imm = (*raw >> 20) & 0xFFF;
-                    
-                    if (cpu->instr.imm & 0x800)
-                        cpu->instr.imm |= 0xFFFFF000;
+                    cpu->instr.imm = IMM_I(raw);
+                    cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
             }
@@ -159,7 +164,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
         }
         case 0x37: // lui
         case 0x17: // auipc
-            cpu->instr.imm = (*raw >> 12) & 0xFFFFF;
+            cpu->instr.imm = IMM_U(raw);
             break;    
     }
 }
