@@ -3,15 +3,15 @@
 #include "nesio.h"
 #include "../libs/neslib.h"
 
-#define OPC(raw) (*(raw) & 0x7F)
-#define RD(raw) ((*(raw) >> 7) & 0x1F)
-#define FUNCT3(raw) ((*(raw) >> 12) & 0x07)
-#define RS1(raw) ((*(raw) >> 15) & 0x1F)
-#define RS2(raw) ((*(raw) >> 20) & 0x1F)
-#define FUNCT7(raw) ((*(raw) >> 25) & 0x7F)
-#define IMM_I(raw) (((*(raw) >> 20) & 0xFFF))
-#define IMM_S(raw) (((( *(raw) >> 25) & 0x7F) << 5) | (((*(raw) >> 7) & 0x1F)))
-#define IMM_U(raw) ((*raw >> 12) & 0xFFFFF)
+#define OPC(raw) ((raw) & 0x7F)
+#define RD(raw) (((raw) >> 7) & 0x1F)
+#define FUNCT3(raw) (((raw) >> 12) & 0x07)
+#define RS1(raw) (((raw) >> 15) & 0x1F)
+#define RS2(raw) (((raw) >> 20) & 0x1F)
+#define FUNCT7(raw) (((raw) >> 25) & 0x7F)
+#define IMM_I(raw) ((((raw) >> 20) & 0xFFF))
+#define IMM_S(raw) (((((raw) >> 25) & 0x7F) << 5) | ((((raw) >> 7) & 0x1F)))
+#define IMM_U(raw) (((raw) >> 12) & 0xFFFFF)
 #define SIGN_EXT_12(imm) ((long)((imm) << 20) >> 20)
 #define SIGN_EXT_13(imm) ((long)((imm) << 19) >> 19)
 #define SIGN_EXT_21(imm) ((long)((imm) << 11) >> 11)
@@ -23,6 +23,12 @@ unsigned char hasJump;
 unsigned long addr;
 unsigned long* instr;
 #pragma bss-name(pop)
+
+static void __fastcall__ debug_put(const char* str) {
+#ifdef DEBUG
+    PUT(str);
+#endif
+}
 
 void __fastcall__ rvInit(struct RiscV* cpu) {
     SETXY(1, 1);
@@ -59,10 +65,10 @@ unsigned long* __fastcall__ rvFetch(const struct RiscV* cpu) {
 }
 
 void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
-    cpu->instr.opcode = OPC(raw);
-    cpu->instr.rd = RD(raw);
-    cpu->instr.funct3 = FUNCT3(raw);
-    cpu->instr.rs1 = RS1(raw);
+    cpu->instr.opcode = OPC(*raw);
+    cpu->instr.rd = RD(*raw);
+    cpu->instr.funct3 = FUNCT3(*raw);
+    cpu->instr.rs1 = RS1(*raw);
    
     switch (cpu->instr.opcode) {
         case 0x33: { // R-type Instructions
@@ -75,8 +81,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x5: // srl/sra
                 case 0x2: // slt
                 case 0x3: // sltu
-                    cpu->instr.rs2 = RS2(raw);
-                    cpu->instr.funct7 = FUNCT7(raw);
+                    cpu->instr.rs2 = RS2(*raw);
+                    cpu->instr.funct7 = FUNCT7(*raw);
                     break;
             }
             break;
@@ -92,7 +98,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x5: // srli/srai/lhu
                 case 0x2: // slti/lw
                 case 0x3: { // sltiu
-                    cpu->instr.imm = IMM_I(raw);
+                    cpu->instr.imm = IMM_I(*raw);
                     cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
@@ -104,8 +110,8 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x0: // sb
                 case 0x1: // sh
                 case 0x2: { // sw
-                    cpu->instr.rs2 = RS2(raw);
-                    cpu->instr.imm = IMM_S(raw);
+                    cpu->instr.rs2 = RS2(*raw);
+                    cpu->instr.imm = IMM_S(*raw);
                     cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
@@ -123,7 +129,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
                 case 0x6: // bltu
                 case 0x7: { // bgeu
                     long imm = 0;
-                    cpu->instr.rs2 = RS2(raw);
+                    cpu->instr.rs2 = RS2(*raw);
                     
                     imm |= ((*raw >> 31) & 0x1) << 12;  // imm[12]
                     imm |= ((*raw >> 25) & 0x3F) << 5;  // imm[10:5]
@@ -155,7 +161,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
 
             switch (cpu->instr.funct3) {
                 case 0x0: { 
-                    cpu->instr.imm = IMM_I(raw);
+                    cpu->instr.imm = IMM_I(*raw);
                     cpu->instr.imm = SIGN_EXT_12(cpu->instr.imm);
                     break;
                 }
@@ -164,7 +170,7 @@ void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw) {
         }
         case 0x37: // lui
         case 0x17: // auipc
-            cpu->instr.imm = IMM_U(raw);
+            cpu->instr.imm = IMM_U(*raw);
             break;    
     }
 }
@@ -178,71 +184,51 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
             switch (cpu->instr.funct3) {
                 case 0x0: { // add/sub
                     if (cpu->instr.funct7 == 0x00) { // add
-                        #ifdef DEBUG
-                        PUT("add");
-                        #endif
+                        debug_put("add");
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] + cpu->regs[cpu->instr.rs2];
                     } else if (cpu->instr.funct7 == 0x20) { // sub
-                        #ifdef DEBUG
-                        PUT("sub");
-                        #endif
+                        debug_put("sub");
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] - cpu->regs[cpu->instr.rs2];
                     }
                     break;
                 }
                 case 0x4: { // xor
-                    #ifdef DEBUG
-                    PUT("xor");
-                    #endif
+                    debug_put("xor");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] ^ cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x6: { // or
-                    #ifdef DEBUG
-                    PUT("or");
-                    #endif
+                    debug_put("or");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] | cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x7: { // and
-                    #ifdef DEBUG
-                    PUT("and");
-                    #endif
+                    debug_put("and");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] & cpu->regs[cpu->instr.rs2];
                     break;
                 }
                 case 0x1: { // sll
-                    #ifdef DEBUG
-                    PUT("sll");
-                    #endif
+                    debug_put("sll");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] << (cpu->regs[cpu->instr.rs2] & 0x1F);
                     break;
                 }
                 case 0x5: { // srl/sra
                     if (cpu->instr.funct7 == 0x00) { // srl
-                        #ifdef DEBUG
-                        PUT("srl");
-                        #endif
+                        debug_put("srl");
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] >> (cpu->regs[cpu->instr.rs2] & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // sra
-                        #ifdef DEBUG
-                        PUT("sra");
-                        #endif
+                        debug_put("sra");
                         cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] >> (cpu->regs[cpu->instr.rs2] & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slt
-                    #ifdef DEBUG
-                    PUT("slt");
-                    #endif
+                    debug_put("slt");
                     cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] < (long)cpu->regs[cpu->instr.rs2] ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltu
-                    #ifdef DEBUG
-                    PUT("sltu");
-                    #endif
+                    debug_put("sltu");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] < cpu->regs[cpu->instr.rs2] ? 1: 0;
                     break;
                 }
@@ -258,65 +244,47 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
         case 0x13: { // I-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // addi
-                    #ifdef DEBUG
-                    PUT("addi");
-                    #endif
+                    debug_put("addi");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     break;
                 }
                 case 0x4: { // xori
-                    #ifdef DEBUG
-                    PUT("xori");
-                    #endif
+                    debug_put("xori");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] ^ cpu->instr.imm;
                     break;
                 }
                 case 0x6: { // ori
-                    #ifdef DEBUG
-                    PUT("ori");
-                    #endif
+                    debug_put("ori");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] | cpu->instr.imm;
                     break;
                 }
                 case 0x7: {// andi
-                    #ifdef DEBUG
-                    PUT("andi");
-                    #endif
+                    debug_put("andi");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] & cpu->instr.imm;
                     break;
                 }
                 case 0x1: { // slli
-                    #ifdef DEBUG
-                    PUT("slli");
-                    #endif
+                    debug_put("slli");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] << (cpu->instr.imm & 0x1F);
                     break;
                 }
                 case 0x5: { // srli/srai
                     if (cpu->instr.funct7 == 0x00) { // srli
-                        #ifdef DEBUG
-                        PUT("srli");
-                        #endif
+                        debug_put("srli");
                         cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] >> (cpu->instr.imm & 0x1F);
                     } else if (cpu->instr.funct7 == 0x20) { // srai
-                        #ifdef DEBUG
-                        PUT("srai");
-                        #endif
+                        debug_put("srai");
                         cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] >> (cpu->instr.imm & 0x1F);
                     }
                     break;
                 }
                 case 0x2: { // slti
-                    #ifdef DEBUG
-                    PUT("slti");
-                    #endif
+                    debug_put("slti");
                     cpu->regs[cpu->instr.rd] = (long)cpu->regs[cpu->instr.rs1] < (long)cpu->instr.imm ? 1: 0;
                     break;
                 }
                 case 0x3: { // sltiu
-                    #ifdef DEBUG
-                    PUT("sltiu");
-                    #endif
+                    debug_put("sltiu");
                     cpu->regs[cpu->instr.rd] = cpu->regs[cpu->instr.rs1] < cpu->instr.imm ? 1: 0;
                     break;
                 }
@@ -332,41 +300,31 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
         case 0x03: { // Load Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // lb
-                    #ifdef DEBUG
-                    PUT("lb");
-                    #endif
+                    debug_put("lb");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)(signed char)*busLoad(&cpu->bus, &addr, 8);
                     break;
                 }
                 case 0x1: { // lh
-                    #ifdef DEBUG
-                    PUT("lh");
-                    #endif
+                    debug_put("lh");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)(int)*busLoad(&cpu->bus, &addr, 16);
                     break;
                 }
                 case 0x2: { // lw
-                    #ifdef DEBUG
-                    PUT("lw");
-                    #endif
+                    debug_put("lw");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = (long)*busLoad(&cpu->bus, &addr, 32);
                     break;
                 }   
                 case 0x4: { // lbu
-                    #ifdef DEBUG
-                    PUT("lbu");
-                    #endif
+                    debug_put("lbu");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 8);
                     break;
                 } 
                 case 0x5: { // lhu
-                    #ifdef DEBUG
-                    PUT("lhu");
-                    #endif
+                    debug_put("lhu");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     cpu->regs[cpu->instr.rd] = *busLoad(&cpu->bus, &addr, 16);
                     break;
@@ -382,25 +340,19 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
         case 0x23: { // Store Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // sb
-                    #ifdef DEBUG
-                    PUT("sb");
-                    #endif
+                    debug_put("sb");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 8, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x1: { // sh
-                    #ifdef DEBUG
-                    PUT("sh");
-                    #endif
+                    debug_put("sh");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 16, &cpu->regs[cpu->instr.rs2]);
                     break;
                 }
                 case 0x2: { // sw
-                    #ifdef DEBUG
-                    PUT("sw");
-                    #endif
+                    debug_put("sw");
                     addr = cpu->regs[cpu->instr.rs1] + cpu->instr.imm;
                     busStore(&cpu->bus, &addr, 32, &cpu->regs[cpu->instr.rs2]);
                     break;
@@ -416,54 +368,42 @@ void __fastcall__ rvExecute(struct RiscV* cpu) {
         case 0x63: { // B-type Instructions
             switch (cpu->instr.funct3) {
                 case 0x0: { // beq
-                    #ifdef DEBUG
-                    PUT("beq");
-                    #endif
+                    debug_put("beq");
                     if (cpu->regs[cpu->instr.rs1] == cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x1: { // bne
-                    #ifdef DEBUG
-                    PUT("bne");
-                    #endif
+                    debug_put("bne");
                     if (cpu->regs[cpu->instr.rs1] != cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x4: { // blt
-                    #ifdef DEBUG
-                    PUT("blt");
-                    #endif
+                    debug_put("blt");
                     if ((long)cpu->regs[cpu->instr.rs1] < (long)cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x5: { //bge
-                    #ifdef DEBUG
-                    PUT("bge");
-                    #endif
+                    debug_put("bge");
                     if ((long)cpu->regs[cpu->instr.rs1] >= (long)cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x6: { // bltu
-                    #ifdef DEBUG
-                    PUT("bltu");
-                    #endif
+                    debug_put("bltu");
                     if (cpu->regs[cpu->instr.rs1] < cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
                     break;
                 }
                 case 0x7: { //bgeu
-                    #ifdef DEBUG
-                    PUT("bgeu");
-                    #endif
+                    debug_put("bgeu");
                     if (cpu->regs[cpu->instr.rs1] >= cpu->regs[cpu->instr.rs2]) {
                         cpu->pc += cpu->instr.imm;
                     }
