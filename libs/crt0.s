@@ -214,16 +214,16 @@ detectNTSC:
 
 	jsr _ppu_off
 
-	; ldx #<music_data
-	; ldy #>music_data
-	; lda <NTSC_MODE
-	; jsr FamiToneInit
+	ldx #<music_data
+	ldy #>music_data
+	lda <NTSC_MODE
+	jsr FamiToneInit
 
-; .if(FT_SFX_ENABLE)
-; 	ldx #<sounds_data
-; 	ldy #>sounds_data
-; 	jsr FamiToneSfxInit
-; .endif
+.if(FT_SFX_ENABLE)
+	ldx #<sounds_data
+	ldy #>sounds_data
+	jsr FamiToneSfxInit
+.endif
 
 	lda #$fd
 	sta <RAND_SEED
@@ -240,19 +240,19 @@ detectNTSC:
 
 .segment "RODATA"
 
-; music_data:
-; ;	.include "music.s"
+music_data:
+;	.include "music.s"
 
-; .if(FT_SFX_ENABLE)
-; sounds_data:
-; ;	.include "sounds.s"
-; .endif
+.if(FT_SFX_ENABLE)
+sounds_data:
+;	.include "sounds.s"
+.endif
 
 .segment "SAMPLES"
 
-; .if(FT_DPCM_ENABLE)
-; ;	.incbin "music.dmc"
-; .endif
+.if(FT_DPCM_ENABLE)
+;	.incbin "music.dmc"
+.endif
 
 .segment "VECTORS"
 

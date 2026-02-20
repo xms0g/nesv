@@ -112,23 +112,23 @@ void __fastcall__ oam_hide_rest(unsigned char sprid);
 
 //play a music in FamiTone format
 
-// void __fastcall__ music_play(unsigned char song);
+void __fastcall__ music_play(unsigned char song);
 
-// //stop music
+//stop music
 
-// void __fastcall__ music_stop(void);
+void __fastcall__ music_stop(void);
 
-// //pause and unpause music
+//pause and unpause music
 
-// void __fastcall__ music_pause(unsigned char pause);
+void __fastcall__ music_pause(unsigned char pause);
 
-// //play FamiTone sound effect on channel 0..3
+//play FamiTone sound effect on channel 0..3
 
-// void __fastcall__ sfx_play(unsigned char sound,unsigned char channel);
+void __fastcall__ sfx_play(unsigned char sound,unsigned char channel);
 
-// //play a DPCM sample, 1..63
+//play a DPCM sample, 1..63
 
-// void __fastcall__ sample_play(unsigned char sample);
+void __fastcall__ sample_play(unsigned char sample);
 
 
 
