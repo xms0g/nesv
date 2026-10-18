@@ -72,7 +72,7 @@ enum Registers {
     R_T6 = 31
 };
 
-struct RiscVInstr {
+struct riscvInstr {
     unsigned char opcode;
     unsigned char rd;
     unsigned char funct3;
@@ -82,23 +82,23 @@ struct RiscVInstr {
     long imm;
 };
 
-struct RiscV {
+struct riscv {
     unsigned long regs[32];
-    struct RiscVInstr instr;
+    struct riscvInstr instr;
     unsigned long pc;
     struct Bus bus;
 };
 
-void __fastcall__ rvInit(struct RiscV* cpu);
+void __fastcall__ rv_init(struct riscv* cpu);
 
-void __fastcall__ rvRun(struct RiscV* cpu);
+void __fastcall__ rv_run(struct riscv* cpu);
 
-unsigned long* __fastcall__ rvFetch(const struct RiscV* cpu);
+unsigned long* __fastcall__ rv_fetch(const struct riscv* cpu);
 
-void __fastcall__ rvDecode(struct RiscV* cpu, const unsigned long* raw);
+void __fastcall__ rv_decode(struct riscv* cpu, const unsigned long* raw);
 
-void __fastcall__ rvExecute(struct RiscV* cpu);
+void __fastcall__ rv_execute(struct riscv* cpu);
 
-void __fastcall__ rvDumpReg(const struct RiscV* cpu);
+void __fastcall__ rv_dump_regs(const struct riscv* cpu);
 
 #endif

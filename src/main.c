@@ -18,20 +18,20 @@ const unsigned char code[] = {
     0x13, 0x01, 0x81,0x00,
 };
 
-static struct RiscV cpu;
+static struct riscv cpu;
 
 void main(void) {
 	ppu_off(); // screen off
 
 	pal_bg(palette); //	load the BG palette
 
-	rvInit(&cpu);
+	rv_init(&cpu);
 
 	memcpy(&cpu.bus.dram.mem, code, sizeof(code));
 	
-	rvRun(&cpu);
+	rv_run(&cpu);
 
-	rvDumpReg(&cpu);
+	rv_dump_regs(&cpu);
 	
 	ppu_on_all(); // turn on screen1
 	

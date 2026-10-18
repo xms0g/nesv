@@ -8,8 +8,8 @@ struct DRAM {
     unsigned char mem[DRAM_SIZE];
 };
 
-unsigned long* __fastcall__ drmLoad(const struct DRAM* dram, const unsigned long* address, unsigned char size);
+unsigned long* __fastcall__ drm_load(const struct DRAM* dram, const unsigned long* address, unsigned char size);
 
-void __fastcall__ drmStore(struct DRAM* dram, const unsigned long* address, unsigned char size, const unsigned long* value);
+void __fastcall__ drm_store(struct DRAM* dram, const unsigned long* address, unsigned char size, const unsigned long* value);
 
 #endif
